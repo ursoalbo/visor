@@ -161,6 +161,7 @@
         .btn-fuel { background: #1a1a1a; color: var(--accent-warn); border: 1px solid var(--accent-warn); }
         .btn-med { background: #1a1a1a; color: var(--accent-risk); border: 1px solid var(--accent-risk); }
         .btn-sos { background: #1a1a1a; color: var(--accent-cold); border: 1px solid var(--accent-cold); }
+        .btn-install { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2); display: none; }
 
         .commuter-container { width: 100%; max-width: 600px; margin-bottom: 25px; }
         .commuter-label { font-size: 0.9rem; color:#ccc; margin-bottom:8px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px black;}
@@ -193,12 +194,11 @@
         .f-day { font-weight: bold; font-size: 1.2rem; }
         .f-detail { color: var(--text-dim); font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
         
-        /* FOOTER STYLES (UPDATED FOR VISIBILITY) */
         .footer-section { 
             width: 100%; 
             max-width: 600px; 
             margin-top: 20px; 
-            padding: 30px 20px 80px 20px; /* Added heavy bottom padding to clear mobile UI */
+            padding: 30px 20px 80px 20px;
             text-align: center; 
             border-top: 1px solid rgba(255,255,255,0.1); 
         }
@@ -269,6 +269,9 @@
         <button class="full-btn btn-sos" onclick="findSOS()" id="sosBtn">
             🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)
         </button>
+        <button class="full-btn btn-install" id="installBtn">
+            📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ
+        </button>
     </div>
 
     <div class="commuter-container">
@@ -308,6 +311,7 @@
         let selectedDayIndex = 0; 
         let currentCityName = "Unknown";
         let rawApiData = null; 
+        let deferredPrompt = null;
 
         const STRINGS = {
             en: {
@@ -331,6 +335,7 @@
                 fuelBtn: "⛽ NEAREST GAS STATION",
                 medBtn: "🏥 MEDICAL / URGENT CARE",
                 sosBtn: "🆘 ROADSIDE ASSIST (MOTORWAY / 112)",
+                installBtn: "📱 INSTALL APP",
                 searchStr: "SEARCHING...",
                 noneStr: "NONE WITHIN 50KM",
                 errStr: "API ERROR",
@@ -361,6 +366,7 @@
                 fuelBtn: "⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ",
                 medBtn: "🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
                 sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)",
+                installBtn: "📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ",
                 searchStr: "ΑΝΑΖΗΤΗΣΗ...",
                 noneStr: "ΚΑΝΕΝΑ ΣΤΑ 50km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
@@ -385,14 +391,39 @@
                 currentLon = parseFloat(savedLon);
                 currentCityName = savedName || "Saved Location";
                 document.getElementById('currentLocDisplay').innerText = currentCityName;
-                fetchWeather(); 
             } else {
-                fetchWeather(); 
-                getLocation(); 
+                currentLat = 37.9838;
+                currentLon = 23.7275;
+                currentCityName = "Athens, GR";
+                document.getElementById('currentLocDisplay').innerText = `📍 ${currentCityName}`;
             }
             
+            fetchWeather(); 
             updateStaticText();
         };
+
+        const installBtnEl = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtnEl.style.display = 'flex';
+        });
+
+        installBtnEl.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                installBtnEl.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtnEl.style.display = 'none';
+            deferredPrompt = null;
+        });
 
         function toggleLang() {
             currentLang = currentLang === 'en' ? 'el' : 'en';
@@ -413,6 +444,7 @@
             document.getElementById('donateText').innerText = t.donateText;
             document.getElementById('donateBtn').innerText = t.donateBtn;
             document.getElementById('privacyText').innerText = t.privacyText;
+            installBtnEl.innerText = t.installBtn;
             
             resetActionButtons();
         }
