@@ -2,7 +2,7 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>VISOR</title>
     
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -193,6 +193,31 @@
         .f-day { font-weight: bold; font-size: 1.2rem; }
         .f-detail { color: var(--text-dim); font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
         
+        /* FOOTER STYLES (UPDATED FOR VISIBILITY) */
+        .footer-section { 
+            width: 100%; 
+            max-width: 600px; 
+            margin-top: 20px; 
+            padding: 30px 20px 80px 20px; /* Added heavy bottom padding to clear mobile UI */
+            text-align: center; 
+            border-top: 1px solid rgba(255,255,255,0.1); 
+        }
+        .footer-section p { color: var(--text-main); font-size: 0.95rem; margin-bottom: 15px; }
+        .donate-btn { display: inline-block; background: #ffdd00; color: #000000; padding: 10px 25px; border-radius: 8px; font-weight: 900; text-decoration: none; letter-spacing: 1px; transition: transform 0.2s; }
+        .donate-btn:active { transform: scale(0.95); }
+        
+        .privacy-disclaimer { 
+            margin-top: 35px; 
+            font-size: 0.85rem; 
+            color: #dddddd; 
+            line-height: 1.5; 
+            background: rgba(0, 0, 0, 0.4); 
+            padding: 15px; 
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
         .loader { display: none; border: 4px solid #333; border-top: 4px solid var(--accent-safe); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
@@ -266,6 +291,14 @@
     <div class="forecast-header" id="forecastHeader">Forecast</div>
     <div class="forecast-list" id="forecastList"></div>
 
+    <div class="footer-section">
+        <p id="donateText">Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις</p>
+        <a href="https://buymeacoffee.com/ursoalbo" target="_blank" class="donate-btn" id="donateBtn">ΕΔΩ</a>
+        <div class="privacy-disclaimer" id="privacyText">
+            Απόρρητο: Το VISOR δεν αποθηκεύει δεδομένα σε εξωτερικούς διακομιστές. Όλες οι τοποθεσίες και οι προτιμήσεις παραμένουν αυστηρά τοπικά στη συσκευή σας και κανείς δεν έχει πρόσβαση σε αυτά.
+        </div>
+    </div>
+
     <script>
         let currentLang = 'el'; 
         let currentLat = 37.9838; 
@@ -274,7 +307,7 @@
         let weatherDataCache = null; 
         let selectedDayIndex = 0; 
         let currentCityName = "Unknown";
-        let rawApiData = null; // Stored to instantly update current temp on day toggle
+        let rawApiData = null; 
 
         const STRINGS = {
             en: {
@@ -302,7 +335,10 @@
                 noneStr: "NONE WITHIN 50KM",
                 errStr: "API ERROR",
                 gasStation: "Gas Station",
-                medicalCenter: "Medical Facility"
+                medicalCenter: "Medical Facility",
+                donateText: "If you found VISOR useful, you can support it",
+                donateBtn: "HERE",
+                privacyText: "Privacy Policy: VISOR does not store data on external servers. All user locations and preferences remain strictly local on your device and are completely inaccessible to third parties."
             },
             el: {
                 placeholder: "Αναζήτηση Πόλης...",
@@ -329,7 +365,10 @@
                 noneStr: "ΚΑΝΕΝΑ ΣΤΑ 50km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
                 gasStation: "Βενζινάδικο",
-                medicalCenter: "Ιατρικό Κέντρο"
+                medicalCenter: "Ιατρικό Κέντρο",
+                donateText: "Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις",
+                donateBtn: "ΕΔΩ",
+                privacyText: "Απόρρητο Δεδομένων: Η εφαρμογή δεν αποθηκεύει δεδομένα σε κανέναν εξωτερικό διακομιστή. Όλα τα στοιχεία του χρήστη μένουν τοπικά στη συσκευή και κανείς δεν έχει πρόσβαση σε αυτά."
             }
         };
 
@@ -371,6 +410,9 @@
             document.getElementById('legRain').innerText = t.legRain;
             document.getElementById('legNight').innerText = t.legNight;
             document.getElementById('feelLabel').innerText = t.feels;
+            document.getElementById('donateText').innerText = t.donateText;
+            document.getElementById('donateBtn').innerText = t.donateBtn;
+            document.getElementById('privacyText').innerText = t.privacyText;
             
             resetActionButtons();
         }
@@ -406,7 +448,7 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
-                rawApiData = data; // Cache full response for live lookups
+                rawApiData = data; 
                 processData(data);
                 updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
                 resetActionButtons();
@@ -515,18 +557,15 @@
             const headerText = dayIndex === 0 ? `${t.today} (${dayName})` : dayName + ` ${dateObj.getDate()}`;
             document.getElementById('dateLabel').innerText = headerText;
 
-            // --- LIVE TEMPERATURE FIX ---
             let displayTemp, displayFeel;
             if (dayIndex === 0) {
-                // Find exact current hour index from raw API data
-                const nowIsoString = new Date().toISOString().slice(0, 14) + "00"; // e.g. 2026-06-06T15:
+                const nowIsoString = new Date().toISOString().slice(0, 14) + "00"; 
                 let currentHourIdx = rawApiData.hourly.time.findIndex(t => t.startsWith(nowIsoString.slice(0, 13)));
-                if (currentHourIdx === -1) currentHourIdx = 0; // Fallback
+                if (currentHourIdx === -1) currentHourIdx = 0; 
                 
                 displayTemp = Math.round(rawApiData.hourly.temperature_2m[currentHourIdx]);
                 displayFeel = Math.round(rawApiData.hourly.apparent_temperature[currentHourIdx]);
             } else {
-                // For future days, show peak or average representation (Max/Min midpoint or Max)
                 displayTemp = dayData.dailyMax;
                 displayFeel = dayData.dailyMax;
             }
