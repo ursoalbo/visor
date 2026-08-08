@@ -274,6 +274,7 @@
         let weatherDataCache = null; 
         let selectedDayIndex = 0; 
         let currentCityName = "Unknown";
+        let rawApiData = null; // Stored to instantly update current temp on day toggle
 
         const STRINGS = {
             en: {
@@ -405,6 +406,7 @@
             try {
                 const response = await fetch(url);
                 const data = await response.json();
+                rawApiData = data; // Cache full response for live lookups
                 processData(data);
                 updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
                 resetActionButtons();
@@ -503,7 +505,7 @@
         }
 
         function renderDashboard(dayIndex) {
-            if(!weatherDataCache) return;
+            if(!weatherDataCache || !rawApiData) return;
             const t = STRINGS[currentLang];
             const dayData = weatherDataCache[dayIndex];
             const stats = dayData.stats;
@@ -513,8 +515,24 @@
             const headerText = dayIndex === 0 ? `${t.today} (${dayName})` : dayName + ` ${dateObj.getDate()}`;
             document.getElementById('dateLabel').innerText = headerText;
 
-            document.getElementById('tempStat').innerText = Math.round(stats.minTemp);
-            document.getElementById('feelStat').innerText = Math.round(stats.minFeel) + "°";
+            // --- LIVE TEMPERATURE FIX ---
+            let displayTemp, displayFeel;
+            if (dayIndex === 0) {
+                // Find exact current hour index from raw API data
+                const nowIsoString = new Date().toISOString().slice(0, 14) + "00"; // e.g. 2026-06-06T15:
+                let currentHourIdx = rawApiData.hourly.time.findIndex(t => t.startsWith(nowIsoString.slice(0, 13)));
+                if (currentHourIdx === -1) currentHourIdx = 0; // Fallback
+                
+                displayTemp = Math.round(rawApiData.hourly.temperature_2m[currentHourIdx]);
+                displayFeel = Math.round(rawApiData.hourly.apparent_temperature[currentHourIdx]);
+            } else {
+                // For future days, show peak or average representation (Max/Min midpoint or Max)
+                displayTemp = dayData.dailyMax;
+                displayFeel = dayData.dailyMax;
+            }
+
+            document.getElementById('tempStat').innerText = displayTemp;
+            document.getElementById('feelStat').innerText = displayFeel + "°";
             document.getElementById('windStat').innerText = Math.round(stats.maxWind) + " km/h";
             document.getElementById('rainStat').innerText = dayData.dailyRainProb + "%";
             document.getElementById('windArrow').style.transform = `rotate(${stats.avgWindDir + 180}deg)`;
