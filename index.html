@@ -242,7 +242,7 @@
             🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ
         </button>
         <button class="full-btn btn-sos" onclick="findSOS()" id="sosBtn">
-            🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΠΕΡΙΟΧΗΣ)
+            🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)
         </button>
     </div>
 
@@ -294,9 +294,9 @@
                 legTemp: "Temp",
                 legRain: "Rain %",
                 legNight: "Night",
-                fuelBtn: "⛽ EMERGENCY FUEL",
+                fuelBtn: "⛽ NEAREST GAS STATION",
                 medBtn: "🏥 MEDICAL / URGENT CARE",
-                sosBtn: "🆘 REGIONAL ROADSIDE ASSIST",
+                sosBtn: "🆘 ROADSIDE ASSIST (MOTORWAY / 112)",
                 searchStr: "SEARCHING...",
                 noneStr: "NONE WITHIN 50KM",
                 errStr: "API ERROR",
@@ -323,7 +323,7 @@
                 legNight: "Νύχτα",
                 fuelBtn: "⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ",
                 medBtn: "🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
-                sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΠΕΡΙΟΧΗΣ)",
+                sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)",
                 searchStr: "ΑΝΑΖΗΤΗΣΗ...",
                 noneStr: "ΚΑΝΕΝΑ ΣΤΑ 50km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
@@ -712,7 +712,7 @@
             btn.innerText = t.searchStr;
             btn.onclick = null; 
 
-            const query = `[out:json];node(around:50000,${currentLat},${currentLon})["amenity"="fuel"];out;`;
+            const query = `[out:json][timeout:15];(node(around:50000,${currentLat},${currentLon})["amenity"="fuel"];way(around:50000,${currentLat},${currentLon})["amenity"="fuel"];);out body;>;out skel qt;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
@@ -728,13 +728,23 @@
                 let nearest = null;
                 let minDist = Infinity;
 
-                data.elements.forEach(station => {
-                    const d = haversineDist(currentLat, currentLon, station.lat, station.lon);
-                    if (d < minDist) {
-                        minDist = d;
-                        nearest = station;
+                data.elements.forEach(el => {
+                    let lat = el.lat;
+                    let lon = el.lon;
+                    if (lat && lon) {
+                        const d = haversineDist(currentLat, currentLon, lat, lon);
+                        if (d < minDist) {
+                            minDist = d;
+                            nearest = el;
+                        }
                     }
                 });
+
+                if (!nearest) {
+                    btn.innerText = t.noneStr;
+                    setTimeout(resetActionButtons, 3000);
+                    return;
+                }
 
                 const stName = nearest.tags?.name || nearest.tags?.brand || t.gasStation;
                 const distStr = minDist.toFixed(1);
@@ -757,7 +767,7 @@
             btn.innerText = t.searchStr;
             btn.onclick = null; 
 
-            const query = `[out:json];node(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];out;`;
+            const query = `[out:json][timeout:15];(node(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];way(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];rel(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];);out center;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
@@ -773,13 +783,23 @@
                 let nearest = null;
                 let minDist = Infinity;
 
-                data.elements.forEach(facility => {
-                    const d = haversineDist(currentLat, currentLon, facility.lat, facility.lon);
-                    if (d < minDist) {
-                        minDist = d;
-                        nearest = facility;
+                data.elements.forEach(el => {
+                    let lat = el.lat || el.center?.lat;
+                    let lon = el.lon || el.center?.lon;
+                    if (lat && lon) {
+                        const d = haversineDist(currentLat, currentLon, lat, lon);
+                        if (d < minDist) {
+                            minDist = d;
+                            nearest = { lat, lon, tags: el.tags };
+                        }
                     }
                 });
+
+                if (!nearest) {
+                    btn.innerText = t.noneStr;
+                    setTimeout(resetActionButtons, 3000);
+                    return;
+                }
 
                 const stName = nearest.tags?.name || t.medicalCenter;
                 const distStr = minDist.toFixed(1);
@@ -802,7 +822,7 @@
             btn.innerText = t.searchStr;
             btn.onclick = null; 
             
-            const query = `[out:json];way(around:3000,${currentLat},${currentLon})["highway"="motorway"];out;`;
+            const query = `[out:json][timeout:10];way(around:100,${currentLat},${currentLon})["highway"="motorway"];out;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
             
             try {
@@ -837,6 +857,8 @@
                 
             } catch (e) {
                 btn.innerHTML = `📞 112 (SOS)`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
                 btn.onclick = () => window.location.href = `tel:112`;
             }
         }
