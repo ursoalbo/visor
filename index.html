@@ -159,6 +159,7 @@
         }
         .full-btn:active { transform: scale(0.98); }
         .btn-fuel { background: #1a1a1a; color: var(--accent-warn); border: 1px solid var(--accent-warn); }
+        .btn-sub-fuel { background: rgba(0,0,0,0.6); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
         .btn-med { background: #1a1a1a; color: var(--accent-risk); border: 1px solid var(--accent-risk); }
         .btn-sos { background: #1a1a1a; color: var(--accent-cold); border: 1px solid var(--accent-cold); }
         .btn-install { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2); display: none; }
@@ -185,6 +186,10 @@
 
         .collapsible-wrapper { width: 100%; max-width: 600px; overflow: hidden; max-height: 0; transition: max-height 0.4s ease-in-out; }
         .collapsible-wrapper.expanded { max-height: 600px; margin-bottom: 25px; }
+        .collapsible-wrapper.fuel-menu { max-height: 0; margin-bottom: 0; }
+        .collapsible-wrapper.fuel-menu.expanded { max-height: 300px; margin-top: -5px; margin-bottom: 15px; }
+
+        .sub-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 8px;}
         
         .chart-container { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
         
@@ -247,9 +252,18 @@
     </div>
 
     <div class="action-container">
-        <button class="full-btn btn-fuel" onclick="findFuel()" id="fuelBtn">
+        <button class="full-btn btn-fuel" onclick="toggleFuelMenu()" id="fuelBtn">
             ⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ
         </button>
+        <div class="collapsible-wrapper fuel-menu" id="fuelMenuWrapper">
+            <div class="sub-menu-grid">
+                <button class="full-btn btn-sub-fuel" onclick="findSpecificFuel('petrol')" id="btnPetrol">ΒΕΝΖΙΝΗ</button>
+                <button class="full-btn btn-sub-fuel" onclick="findSpecificFuel('diesel')" id="btnDiesel">ΠΕΤΡΕΛΑΙΟ</button>
+                <button class="full-btn btn-sub-fuel" onclick="findSpecificFuel('lpg')" id="btnLpg">LPG</button>
+                <button class="full-btn btn-sub-fuel" onclick="findSpecificFuel('cng')" id="btnCng">CNG</button>
+            </div>
+        </div>
+
         <button class="full-btn btn-med" onclick="findMedical()" id="medBtn">
             🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ
         </button>
@@ -312,6 +326,7 @@
         let deferredPrompt = null;
         let isChartVisible = false;
         let isForecastVisible = false;
+        let isFuelMenuVisible = false;
 
         const STRINGS = {
             en: {
@@ -332,6 +347,10 @@
                 legRain: "Rain %",
                 legNight: "Night",
                 fuelBtn: "⛽ NEAREST GAS STATION",
+                fuelPetrol: "PETROL",
+                fuelDiesel: "DIESEL",
+                fuelLpg: "LPG",
+                fuelCng: "CNG",
                 medBtn: "🏥 MEDICAL / URGENT CARE",
                 sosBtn: "🆘 ROADSIDE ASSIST (MOTORWAY / 112)",
                 installBtn: "📱 INSTALL APP",
@@ -366,6 +385,10 @@
                 legRain: "Βροχή %",
                 legNight: "Νύχτα",
                 fuelBtn: "⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ",
+                fuelPetrol: "ΒΕΝΖΙΝΗ",
+                fuelDiesel: "ΠΕΤΡΕΛΑΙΟ",
+                fuelLpg: "LPG",
+                fuelCng: "CNG",
                 medBtn: "🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
                 sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)",
                 installBtn: "📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ",
@@ -472,6 +495,16 @@
             }
         }
 
+        function toggleFuelMenu() {
+            isFuelMenuVisible = !isFuelMenuVisible;
+            const wrapper = document.getElementById('fuelMenuWrapper');
+            if(isFuelMenuVisible) {
+                wrapper.classList.add('expanded');
+            } else {
+                wrapper.classList.remove('expanded');
+            }
+        }
+
         function updateStaticText() {
             const t = STRINGS[currentLang];
             document.getElementById('langBtn').innerText = currentLang.toUpperCase();
@@ -488,6 +521,11 @@
             document.getElementById('forecastToggleBtn').innerText = isForecastVisible ? t.forecastHide : t.forecastShow;
             installBtnEl.innerText = t.installBtn;
             
+            document.getElementById('btnPetrol').innerText = t.fuelPetrol;
+            document.getElementById('btnDiesel').innerText = t.fuelDiesel;
+            document.getElementById('btnLpg').innerText = t.fuelLpg;
+            document.getElementById('btnCng').innerText = t.fuelCng;
+            
             resetActionButtons();
         }
 
@@ -498,7 +536,7 @@
             btnF.innerText = t.fuelBtn;
             btnF.style.background = "#1a1a1a";
             btnF.style.color = "var(--accent-warn)";
-            btnF.onclick = findFuel;
+            btnF.onclick = toggleFuelMenu;
 
             const btnM = document.getElementById('medBtn');
             btnM.innerText = t.medBtn;
@@ -837,13 +875,20 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        async function findFuel() {
+        async function findSpecificFuel(type) {
             const btn = document.getElementById('fuelBtn');
             const t = STRINGS[currentLang];
             btn.innerText = t.searchStr;
             btn.onclick = null; 
 
-            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})["amenity"="fuel"];way(around:15000,${currentLat},${currentLon})["amenity"="fuel"];);out center;`;
+            isFuelMenuVisible = false;
+            document.getElementById('fuelMenuWrapper').classList.remove('expanded');
+
+            let tagFilter = '["amenity"="fuel"]';
+            if (type === 'lpg') tagFilter = '["amenity"="fuel"]["fuel:lpg"="yes"]';
+            if (type === 'cng') tagFilter = '["amenity"="fuel"]["fuel:cng"="yes"]';
+
+            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})${tagFilter};way(around:15000,${currentLat},${currentLon})${tagFilter};);out center;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
@@ -882,7 +927,10 @@
                 const distStr = minDist.toFixed(1);
                 const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat || nearest.center.lat},${nearest.lon || nearest.center.lon}`;
 
-                btn.innerHTML = `⛽ ${stName} (${distStr}km) ➔ GO`;
+                let fuelIcon = '⛽';
+                if (type === 'lpg' || type === 'cng') fuelIcon = '♻️';
+
+                btn.innerHTML = `${fuelIcon} ${stName} (${distStr}km) ➔ GO`;
                 btn.style.background = "#fff";
                 btn.style.color = "#000";
                 btn.onclick = () => window.open(mapsUrl, '_blank');
