@@ -162,6 +162,8 @@
         .btn-med { background: #1a1a1a; color: var(--accent-risk); border: 1px solid var(--accent-risk); }
         .btn-sos { background: #1a1a1a; color: var(--accent-cold); border: 1px solid var(--accent-cold); }
         .btn-install { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2); display: none; }
+        
+        .btn-toggle { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
 
         .commuter-container { width: 100%; max-width: 600px; margin-bottom: 25px; }
         .commuter-label { font-size: 0.9rem; color:#ccc; margin-bottom:8px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px black;}
@@ -181,11 +183,14 @@
         .badge.cold { background: rgba(0, 213, 255, 0.2); color: var(--accent-cold); border: 1px solid var(--accent-cold); }
         .badge.safe { background: rgba(0, 255, 157, 0.15); color: var(--accent-safe); border: 1px solid var(--accent-safe); }
 
-        .chart-container { width: 100%; max-width: 600px; background: var(--card-bg); border-radius: 20px; padding: 15px; margin-bottom: 25px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .collapsible-wrapper { width: 100%; max-width: 600px; overflow: hidden; max-height: 0; transition: max-height 0.4s ease-in-out; }
+        .collapsible-wrapper.expanded { max-height: 600px; margin-bottom: 25px; }
+        
+        .chart-container { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        
         .legend-row { display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: #ccc; margin-bottom: 15px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
-        .forecast-header { width: 100%; max-width: 600px; margin-bottom: 12px; font-size: 1rem; color: #ccc; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px black; font-weight: bold; }
         .forecast-list { width: 100%; max-width: 600px; }
         .forecast-item { background: var(--card-bg); margin-bottom: 12px; padding: 18px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; backdrop-filter: blur(5px); }
         .forecast-item:hover { background: var(--card-hover); }
@@ -194,29 +199,11 @@
         .f-day { font-weight: bold; font-size: 1.2rem; }
         .f-detail { color: var(--text-dim); font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
         
-        .footer-section { 
-            width: 100%; 
-            max-width: 600px; 
-            margin-top: 20px; 
-            padding: 30px 20px 80px 20px;
-            text-align: center; 
-            border-top: 1px solid rgba(255,255,255,0.1); 
-        }
+        .footer-section { width: 100%; max-width: 600px; margin-top: 20px; padding: 30px 20px 80px 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
         .footer-section p { color: var(--text-main); font-size: 0.95rem; margin-bottom: 15px; }
         .donate-btn { display: inline-block; background: #ffdd00; color: #000000; padding: 10px 25px; border-radius: 8px; font-weight: 900; text-decoration: none; letter-spacing: 1px; transition: transform 0.2s; }
         .donate-btn:active { transform: scale(0.95); }
-        
-        .privacy-disclaimer { 
-            margin-top: 35px; 
-            font-size: 0.85rem; 
-            color: #dddddd; 
-            line-height: 1.5; 
-            background: rgba(0, 0, 0, 0.4); 
-            padding: 15px; 
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
+        .privacy-disclaimer { margin-top: 35px; font-size: 0.85rem; color: #dddddd; line-height: 1.5; background: rgba(0, 0, 0, 0.4); padding: 15px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
 
         .loader { display: none; border: 4px solid #333; border-top: 4px solid var(--accent-safe); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -229,7 +216,7 @@
     </div>
 
     <div class="location-bar">
-        <button class="action-btn" id="gpsBtn" onclick="getLocation()">📍</button>
+        <button class="action-btn" id="gpsBtn" onclick="getLocation(false)">📍</button>
         <input type="text" id="locInput" placeholder="Αναζήτηση...">
         <button class="action-btn primary" id="searchBtn" onclick="searchLocation()">🔍</button>
         <button class="action-btn" onclick="toggleLang()" id="langBtn">EL</button>
@@ -282,17 +269,28 @@
 
     <div class="alerts-container" id="alertsContainer"></div>
 
-    <div class="chart-container">
-        <div class="legend-row">
-            <span><span class="dot" style="background:#00ff9d"></span><span id="legTemp">Temp</span></span>
-            <span><span class="dot" style="background:#00d5ff"></span><span id="legRain">Rain %</span></span>
-            <span><span class="dot" style="background:rgba(20, 20, 60, 0.8)"></span><span id="legNight">Night</span></span>
+    <button class="full-btn btn-toggle" id="chartToggleBtn" onclick="toggleChart()">
+        📊 ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ
+    </button>
+
+    <div class="collapsible-wrapper" id="chartWrapper">
+        <div class="chart-container">
+            <div class="legend-row">
+                <span><span class="dot" style="background:#00ff9d"></span><span id="legTemp">Temp</span></span>
+                <span><span class="dot" style="background:#00d5ff"></span><span id="legRain">Rain %</span></span>
+                <span><span class="dot" style="background:rgba(20, 20, 60, 0.8)"></span><span id="legNight">Night</span></span>
+            </div>
+            <canvas id="weatherChart"></canvas>
         </div>
-        <canvas id="weatherChart"></canvas>
     </div>
 
-    <div class="forecast-header" id="forecastHeader">Forecast</div>
-    <div class="forecast-list" id="forecastList"></div>
+    <button class="full-btn btn-toggle" id="forecastToggleBtn" onclick="toggleForecast()">
+        📅 ΠΡΟΒΟΛΗ ΠΡΟΒΛΕΨΗΣ
+    </button>
+
+    <div class="collapsible-wrapper" id="forecastWrapper">
+        <div class="forecast-list" id="forecastList"></div>
+    </div>
 
     <div class="footer-section">
         <p id="donateText">Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις</p>
@@ -312,6 +310,8 @@
         let currentCityName = "Unknown";
         let rawApiData = null; 
         let deferredPrompt = null;
+        let isChartVisible = false;
+        let isForecastVisible = false;
 
         const STRINGS = {
             en: {
@@ -325,7 +325,6 @@
                 warnWet: "Wet Roads",
                 days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
                 today: "TODAY",
-                forecastTitle: "Select Day",
                 commuterTitle: "Timeline",
                 feels: "Feels",
                 safe: "Clear Conditions",
@@ -336,8 +335,12 @@
                 medBtn: "🏥 MEDICAL / URGENT CARE",
                 sosBtn: "🆘 ROADSIDE ASSIST (MOTORWAY / 112)",
                 installBtn: "📱 INSTALL APP",
+                chartShow: "📊 SHOW GRAPH",
+                chartHide: "📊 HIDE GRAPH",
+                forecastShow: "📅 SHOW FORECAST",
+                forecastHide: "📅 HIDE FORECAST",
                 searchStr: "SEARCHING...",
-                noneStr: "NONE WITHIN 50KM",
+                noneStr: "NONE WITHIN 15KM",
                 errStr: "API ERROR",
                 gasStation: "Gas Station",
                 medicalCenter: "Medical Facility",
@@ -356,7 +359,6 @@
                 warnWet: "Υγρό Οδόστρωμα", 
                 days: ['Κυρ', 'Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ'],
                 today: "ΣΗΜΕΡΑ",
-                forecastTitle: "Επιλογη Hμερας",
                 commuterTitle: "Χρονολογιο",
                 feels: "Αίσθηση",
                 safe: "Καλές Συνθήκες",
@@ -367,8 +369,12 @@
                 medBtn: "🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
                 sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)",
                 installBtn: "📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ",
+                chartShow: "📊 ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ",
+                chartHide: "📊 ΑΠΟΚΡΥΨΗ ΓΡΑΦΗΜΑΤΟΣ",
+                forecastShow: "📅 ΠΡΟΒΟΛΗ ΠΡΟΒΛΕΨΗΣ",
+                forecastHide: "📅 ΑΠΟΚΡΥΨΗ ΠΡΟΒΛΕΨΗΣ",
                 searchStr: "ΑΝΑΖΗΤΗΣΗ...",
-                noneStr: "ΚΑΝΕΝΑ ΣΤΑ 50km",
+                noneStr: "ΚΑΝΕΝΑ ΣΤΑ 15km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
                 gasStation: "Βενζινάδικο",
                 medicalCenter: "Ιατρικό Κέντρο",
@@ -398,8 +404,13 @@
                 document.getElementById('currentLocDisplay').innerText = `📍 ${currentCityName}`;
             }
             
-            fetchWeather(); 
+            fetchWeather();
+            getLocation(true); 
             updateStaticText();
+            
+            setInterval(() => {
+                getLocation(true);
+            }, 60000);
         };
 
         const installBtnEl = document.getElementById('installBtn');
@@ -430,12 +441,41 @@
             updateStaticText();
             if(weatherDataCache) renderDashboard(selectedDayIndex); 
         }
+        
+        function toggleChart() {
+            isChartVisible = !isChartVisible;
+            const wrapper = document.getElementById('chartWrapper');
+            const btn = document.getElementById('chartToggleBtn');
+            const t = STRINGS[currentLang];
+            
+            if(isChartVisible) {
+                wrapper.classList.add('expanded');
+                btn.innerText = t.chartHide;
+            } else {
+                wrapper.classList.remove('expanded');
+                btn.innerText = t.chartShow;
+            }
+        }
+
+        function toggleForecast() {
+            isForecastVisible = !isForecastVisible;
+            const wrapper = document.getElementById('forecastWrapper');
+            const btn = document.getElementById('forecastToggleBtn');
+            const t = STRINGS[currentLang];
+            
+            if(isForecastVisible) {
+                wrapper.classList.add('expanded');
+                btn.innerText = t.forecastHide;
+            } else {
+                wrapper.classList.remove('expanded');
+                btn.innerText = t.forecastShow;
+            }
+        }
 
         function updateStaticText() {
             const t = STRINGS[currentLang];
             document.getElementById('langBtn').innerText = currentLang.toUpperCase();
             document.getElementById('locInput').placeholder = t.placeholder;
-            document.getElementById('forecastHeader').innerText = t.forecastTitle;
             document.getElementById('commuterTitle').innerText = t.commuterTitle;
             document.getElementById('legTemp').innerText = t.legTemp;
             document.getElementById('legRain').innerText = t.legRain;
@@ -444,6 +484,8 @@
             document.getElementById('donateText').innerText = t.donateText;
             document.getElementById('donateBtn').innerText = t.donateBtn;
             document.getElementById('privacyText').innerText = t.privacyText;
+            document.getElementById('chartToggleBtn').innerText = isChartVisible ? t.chartHide : t.chartShow;
+            document.getElementById('forecastToggleBtn').innerText = isForecastVisible ? t.forecastHide : t.forecastShow;
             installBtnEl.innerText = t.installBtn;
             
             resetActionButtons();
@@ -801,11 +843,12 @@
             btn.innerText = t.searchStr;
             btn.onclick = null; 
 
-            const query = `[out:json][timeout:15];(node(around:50000,${currentLat},${currentLon})["amenity"="fuel"];way(around:50000,${currentLat},${currentLon})["amenity"="fuel"];);out body;>;out skel qt;`;
+            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})["amenity"="fuel"];way(around:15000,${currentLat},${currentLon})["amenity"="fuel"];);out center;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("HTTP Status " + res.status);
                 const data = await res.json();
 
                 if (!data.elements || data.elements.length === 0) {
@@ -818,8 +861,8 @@
                 let minDist = Infinity;
 
                 data.elements.forEach(el => {
-                    let lat = el.lat;
-                    let lon = el.lon;
+                    let lat = el.lat || el.center?.lat;
+                    let lon = el.lon || el.center?.lon;
                     if (lat && lon) {
                         const d = haversineDist(currentLat, currentLon, lat, lon);
                         if (d < minDist) {
@@ -837,7 +880,7 @@
 
                 const stName = nearest.tags?.name || nearest.tags?.brand || t.gasStation;
                 const distStr = minDist.toFixed(1);
-                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`;
+                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat || nearest.center.lat},${nearest.lon || nearest.center.lon}`;
 
                 btn.innerHTML = `⛽ ${stName} (${distStr}km) ➔ GO`;
                 btn.style.background = "#fff";
@@ -856,11 +899,12 @@
             btn.innerText = t.searchStr;
             btn.onclick = null; 
 
-            const query = `[out:json][timeout:15];(node(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];way(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];rel(around:50000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];);out center;`;
+            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];way(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];rel(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];);out center;`;
             const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("HTTP Status " + res.status);
                 const data = await res.json();
 
                 if (!data.elements || data.elements.length === 0) {
@@ -916,6 +960,7 @@
             
             try {
                 const res = await fetch(url);
+                if (!res.ok) throw new Error("HTTP Status " + res.status);
                 const data = await res.json();
                 
                 let phone = "112";
@@ -952,9 +997,9 @@
             }
         }
 
-        function getLocation() {
+        function getLocation(silent = false) {
             if (navigator.geolocation) {
-                document.getElementById('currentLocDisplay').innerText = "Locating...";
+                if(!silent) document.getElementById('currentLocDisplay').innerText = "Locating...";
                 navigator.geolocation.getCurrentPosition(p => {
                     currentLat = p.coords.latitude;
                     currentLon = p.coords.longitude;
@@ -964,7 +1009,9 @@
                     currentCityName = "GPS Location";
                     document.getElementById('currentLocDisplay').innerText = "📍 GPS Location";
                     fetchWeather();
-                }, () => alert("Denied"));
+                }, () => {
+                    if (!silent) alert("Denied");
+                });
             }
         }
 
