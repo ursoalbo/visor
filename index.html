@@ -220,6 +220,12 @@
 
         .loader { display: none; border: 4px solid #333; border-top: 4px solid var(--accent-safe); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .info-chips { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
+        .chip { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; background: rgba(0,0,0,0.4); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 6px; }
+        .chip.stale { color: var(--accent-warn); border-color: var(--accent-warn); }
+        .attribution { margin-top: 20px; font-size: 0.8rem; color: #999; }
+        .attribution a { color: #999; }
     </style>
 </head>
 <body>
@@ -243,6 +249,7 @@
             <span class="date-label" id="dateLabel">TODAY</span>
             <div class="stat-temp-row">
                 <span id="tempStat">--</span><span style="font-size:1.5rem; vertical-align: super;">°</span>
+                <span id="weatherIcon" style="font-size:2.2rem; margin-left:6px;" role="img"></span>
             </div>
             <div class="stat-feel-row">
                 <span id="feelLabel">Feels</span> <span id="feelStat">--°</span>
@@ -291,6 +298,8 @@
 
     <div class="alerts-container" id="alertsContainer"></div>
 
+    <div class="info-chips" id="infoChips"></div>
+
     <button class="full-btn btn-toggle" id="chartToggleBtn" onclick="toggleChart()">
         📊 ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ
     </button>
@@ -320,6 +329,10 @@
         <div class="privacy-disclaimer" id="privacyText">
             Απόρρητο: Το VISOR δεν αποθηκεύει δεδομένα σε εξωτερικούς διακομιστές. Όλες οι τοποθεσίες και οι προτιμήσεις παραμένουν αυστηρά τοπικά στη συσκευή σας και κανείς δεν έχει πρόσβαση σε αυτά.
         </div>
+        <div class="attribution">
+            <a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather by Open-Meteo</a> ·
+            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">POI data © OpenStreetMap contributors</a>
+        </div>
     </div>
 
     <script>
@@ -339,6 +352,32 @@
 
         // Hours a road stays wet after rain stops ("wet road persistence")
         const WET_ROAD_PERSISTENCE_HOURS = 2;
+
+        // Open-Meteo WMO weathercode → emoji
+        const WEATHER_ICONS = {
+            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+            45: '🌫️', 48: '🌫️',
+            51: '🌦️', 53: '🌦️', 55: '🌧️',
+            56: '🌧️', 57: '🌧️',
+            61: '🌧️', 63: '🌧️', 65: '🌧️',
+            66: '🌧️', 67: '🌧️',
+            71: '🌨️', 73: '🌨️', 75: '❄️', 77: '❄️',
+            80: '🌦️', 81: '🌧️', 82: '⛈️',
+            85: '🌨️', 86: '❄️',
+            95: '⛈️', 96: '⛈️', 99: '⛈️'
+        };
+
+        function weatherIconFor(code) {
+            return WEATHER_ICONS[code] || '🌡️';
+        }
+
+        // Format a duration in minutes as e.g. "1h 40m" (locale-neutral digits)
+        function formatDuration(totalMins) {
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            if (h <= 0) return `${m}m`;
+            return `${h}h ${m}m`;
+        }
         // Only refetch weather if GPS moved more than this (km)
         const GPS_REFETCH_THRESHOLD_KM = 1;
         // How often we re-check GPS (ms). Weather itself is only refetched on movement or manually.
@@ -382,6 +421,12 @@
                 notFound: "Location not found",
                 gasStation: "Gas Station",
                 medicalCenter: "Medical Facility",
+                rainStart: "Rain starting",
+                around: "around",
+                sunsetIn: "Sunset in",
+                sunriseIn: "Sunrise in",
+                dataFrom: "Data from",
+                hoursAgo: "h ago — may be outdated",
                 donateText: "If you found VISOR useful, you can support it",
                 donateBtn: "HERE",
                 privacyText: "Privacy Policy: VISOR does not store data on external servers. All user locations and preferences remain strictly local on your device and are completely inaccessible to third parties."
@@ -423,6 +468,12 @@
                 notFound: "Δεν βρέθηκε η τοποθεσία",
                 gasStation: "Βενζινάδικο",
                 medicalCenter: "Ιατρικό Κέντρο",
+                rainStart: "Έναρξη βροχής",
+                around: "περίπου",
+                sunsetIn: "Δύση σε",
+                sunriseIn: "Ανατολή σε",
+                dataFrom: "Δεδομένα από",
+                hoursAgo: "ώρες πριν — ίσως παρωχημένα",
                 donateText: "Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις",
                 donateBtn: "ΕΔΩ",
                 privacyText: "Απόρρητο Δεδομένων: Η εφαρμογή δεν αποθηκεύει δεδομένα σε κανέναν εξωτερικό διακομιστή. Όλα τα στοιχεία του χρήστη μένουν τοπικά στη συσκευή και κανείς δεν έχει πρόσβαση σε αυτά."
@@ -481,6 +532,17 @@
 
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+            }
+
+            // PWA app-shortcut deep links (#10): ?action=fuel | sos
+            const params = new URLSearchParams(window.location.search);
+            const action = params.get('action');
+            if (action === 'fuel') {
+                isFuelMenuVisible = true;
+                document.getElementById('fuelMenuWrapper').classList.add('expanded');
+                document.getElementById('fuelBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (action === 'sos') {
+                findSOS();
             }
         });
 
@@ -796,6 +858,19 @@
             // Arrow points where the wind blows TO (direction of origin + 180°).
             document.getElementById('windArrow').style.transform = `rotate(${stats.avgWindDir + 180}deg)`;
 
+            // Weather icon (#22): current hour's code today, otherwise the day's dominant code.
+            const iconEl = document.getElementById('weatherIcon');
+            if (dayIndex === 0 && rawApiData) {
+                const nowIsoPrefix = new Date().toISOString().slice(0, 13);
+                let idx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
+                if (idx === -1) idx = 0;
+                iconEl.textContent = weatherIconFor(rawApiData.hourly.weathercode[idx]);
+            } else if (rawApiData && rawApiData.daily.weathercode[dayIndex] !== undefined) {
+                iconEl.textContent = weatherIconFor(rawApiData.daily.weathercode[dayIndex]);
+            } else {
+                iconEl.textContent = '';
+            }
+
             const barContainer = document.getElementById('commuterBar');
             const axisContainer = document.getElementById('commuterAxis');
             barContainer.innerHTML = '';
@@ -842,7 +917,81 @@
             if (stats.alerts.includes('cold') && !stats.alerts.includes('freeze')) createBadge(t.warnCold, 'cold');
             if (alertsCont.children.length === 0) createBadge(t.safe, 'safe');
 
+            renderInfoChips(dayIndex, dayData);
+
             drawChart(dayData);
+        }
+
+        // Info chips row: rain start (#3), daylight countdown (#17), data staleness (#11).
+        function renderInfoChips(dayIndex, dayData) {
+            const t = STRINGS[currentLang];
+            const chips = document.getElementById('infoChips');
+            chips.innerHTML = '';
+
+            const now = new Date();
+
+            // --- #3 Rain start alert ---
+            if (dayIndex === 0 && rawApiData) {
+                const nowIsoPrefix = now.toISOString().slice(0, 13);
+                let startIdx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
+                if (startIdx === -1) startIdx = 0;
+
+                const wasRainingBefore = (h) => h > 0 && rawApiData.hourly.precipitation[h - 1] > 0.1;
+                for (let h = startIdx; h < Math.min(startIdx + 6, rawApiData.hourly.time.length); h++) {
+                    const p = rawApiData.hourly.precipitation[h];
+                    const prob = rawApiData.hourly.precipitation_probability[h];
+                    // First hour where meaningful rain begins (wasn't already raining)
+                    if (p >= 0.3 && prob >= 40 && !wasRainingBefore(h)) {
+                        const badge = document.createElement('div');
+                        badge.className = 'badge warn';
+                        const hrTime = new Date(rawApiData.hourly.time[h]).getHours();
+                        badge.textContent = `🌧️ ${t.rainStart} ${t.around} ${String(hrTime).padStart(2, '0')}:00`;
+                        chips.appendChild(badge);
+                        break;
+                    }
+                }
+            }
+
+            // --- #17 Sunrise/sunset countdown (only meaningful for today) ---
+            if (dayIndex === 0 && rawApiData) {
+                const sunrise = new Date(rawApiData.daily.sunrise[0]);
+                const sunset = new Date(rawApiData.daily.sunset[0]);
+                let chip = null;
+
+                if (now < sunrise) {
+                    chip = makeChip(`🌅 ${t.sunriseIn} ${formatDuration(Math.round((sunrise - now) / 60000))}`);
+                } else if (now < sunset) {
+                    chip = makeChip(`🌇 ${t.sunsetIn} ${formatDuration(Math.round((sunset - now) / 60000))}`);
+                } else {
+                    // After sunset — count down to tomorrow's sunrise
+                    const tomorrowSunrise = new Date(rawApiData.daily.sunrise[1]);
+                    if (tomorrowSunrise && !isNaN(tomorrowSunrise)) {
+                        chip = makeChip(`🌅 ${t.sunriseIn} ${formatDuration(Math.round((tomorrowSunrise - now) / 60000))}`);
+                    }
+                }
+                if (chip) chips.appendChild(chip);
+            }
+
+            // --- #11 Data staleness label ---
+            if (dayIndex === 0) {
+                const savedAt = parseInt(localStorage.getItem('motoWeatherTime') || '0', 10);
+                if (savedAt > 0) {
+                    const ageHours = Math.floor((Date.now() - savedAt) / 3600000);
+                    if (ageHours >= 2) {
+                        const stale = document.createElement('div');
+                        stale.className = 'chip stale';
+                        stale.textContent = `⏳ ${t.dataFrom} ${ageHours} ${t.hoursAgo}`;
+                        chips.appendChild(stale);
+                    }
+                }
+            }
+        }
+
+        function makeChip(text) {
+            const el = document.createElement('div');
+            el.className = 'chip';
+            el.textContent = text;
+            return el;
         }
 
         function createBadge(text, type) {
