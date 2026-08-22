@@ -2,32 +2,34 @@
 <html lang="el">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>VISOR</title>
-    
+
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="shortcut icon" href="favicon.ico">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#000000">
-    
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
+    <!-- Chart.js pinned to an exact version so the app never breaks on upstream releases -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
     <style>
         :root {
             --bg-color: #121212;
             --card-bg: rgba(30, 30, 30, 0.7);
             --card-hover: rgba(50, 50, 50, 0.8);
             --text-main: #ffffff;
-            --text-dim: #bbbbbb; 
-            --accent-safe: #00ff9d; 
-            --accent-warn: #ffca00; 
-            --accent-risk: #ff5e5e; 
-            --accent-cold: #00d5ff; 
+            --text-dim: #bbbbbb;
+            --accent-safe: #00ff9d;
+            --accent-warn: #ffca00;
+            --accent-risk: #ff5e5e;
+            --accent-cold: #00d5ff;
             --commuter-bg: rgba(0,0,0,0.5);
         }
 
@@ -55,7 +57,7 @@
             position: relative;
         }
         h1 { margin: 0; font-size: 2rem; letter-spacing: 4px; font-weight:900; font-style: italic; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        
+
         .location-bar {
             width: 100%;
             max-width: 600px;
@@ -107,18 +109,19 @@
             background: var(--card-bg);
             border-radius: 20px;
             padding: 25px 20px;
-            margin-bottom: 15px; 
+            margin-bottom: 15px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             border: 1px solid rgba(255,255,255,0.1);
             backdrop-filter: blur(10px);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: opacity 0.3s;
         }
-        
+
         .score-left { text-align: left; max-width: 50%; }
-        .score-right { 
-            text-align: right; 
+        .score-right {
+            text-align: right;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -129,7 +132,7 @@
 
         .stat-temp-row { font-size: 3.5rem; font-weight: 700; line-height: 1; margin-bottom: 2px; }
         .stat-feel-row { font-size: 1.1rem; color: var(--text-dim); margin-bottom: 8px; }
-        
+
         .stat-wind-row, .stat-rain-row { font-size: 1.4rem; font-weight: 600; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
         .wind-arrow { display: inline-block; font-size: 1.4rem; transform-origin: center; }
 
@@ -156,6 +159,7 @@
             gap: 10px;
             border: none;
             transition: transform 0.2s;
+            text-align: center;
         }
         .full-btn:active { transform: scale(0.98); }
         .btn-fuel { background: #1a1a1a; color: var(--accent-warn); border: 1px solid var(--accent-warn); }
@@ -163,20 +167,24 @@
         .btn-med { background: #1a1a1a; color: var(--accent-risk); border: 1px solid var(--accent-risk); }
         .btn-sos { background: #1a1a1a; color: var(--accent-cold); border: 1px solid var(--accent-cold); }
         .btn-install { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2); display: none; }
-        
+        /* State classes instead of inline style mutations */
+        .full-btn.searching { opacity: 0.6; pointer-events: none; }
+        .full-btn.result { background: #fff !important; color: #000 !important; }
+
         .btn-toggle { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
 
         .commuter-container { width: 100%; max-width: 600px; margin-bottom: 25px; }
         .commuter-label { font-size: 0.9rem; color:#ccc; margin-bottom:8px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px black;}
         .commuter-bar { display: flex; height: 20px; border-radius: 6px; overflow: hidden; background: var(--commuter-bg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
-        .hour-block { flex: 1; height: 100%; margin-right: 1px; position: relative; }
+        .hour-block { flex: 1; height: 100%; margin-right: 1px; position: relative; transition: opacity 0.2s; }
         .hour-block:last-child { margin-right: 0; }
+        .hour-block.past { opacity: 0.25; }
 
         .commuter-axis { display: flex; margin-top: 6px; width: 100%; }
         .axis-tick { flex: 1; text-align: center; font-size: 0.8rem; color: #ccc; position: relative; height: 15px; text-shadow: 0 1px 2px black; }
         .axis-tick::before { content: ''; display: block; width: 1px; height: 4px; background: #ccc; margin: 0 auto 2px auto; visibility: hidden; }
         .axis-tick.visible::before { visibility: visible; }
-        
+
         .alerts-container { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; }
         .badge { padding: 8px 14px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(5px); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .badge.warn { background: rgba(255, 202, 0, 0.2); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
@@ -185,14 +193,14 @@
         .badge.safe { background: rgba(0, 255, 157, 0.15); color: var(--accent-safe); border: 1px solid var(--accent-safe); }
 
         .collapsible-wrapper { width: 100%; max-width: 600px; overflow: hidden; max-height: 0; transition: max-height 0.4s ease-in-out; }
-        .collapsible-wrapper.expanded { max-height: 600px; margin-bottom: 25px; }
+        .collapsible-wrapper.expanded { max-height: 800px; margin-bottom: 25px; }
         .collapsible-wrapper.fuel-menu { max-height: 0; margin-bottom: 0; }
         .collapsible-wrapper.fuel-menu.expanded { max-height: 300px; margin-top: -5px; margin-bottom: 15px; }
 
         .sub-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 8px;}
-        
-        .chart-container { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        
+
+        .chart-container { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); box-sizing: border-box; }
+
         .legend-row { display: flex; justify-content: center; gap: 20px; font-size: 0.9rem; color: #ccc; margin-bottom: 15px; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
@@ -200,10 +208,10 @@
         .forecast-item { background: var(--card-bg); margin-bottom: 12px; padding: 18px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; backdrop-filter: blur(5px); }
         .forecast-item:hover { background: var(--card-hover); }
         .forecast-item.active { border: 1px solid #fff; background: var(--card-hover); }
-        
+
         .f-day { font-weight: bold; font-size: 1.2rem; }
         .f-detail { color: var(--text-dim); font-size: 1.1rem; display: flex; align-items: center; gap: 15px;}
-        
+
         .footer-section { width: 100%; max-width: 600px; margin-top: 20px; padding: 30px 20px 80px 20px; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); }
         .footer-section p { color: var(--text-main); font-size: 0.95rem; margin-bottom: 15px; }
         .donate-btn { display: inline-block; background: #ffdd00; color: #000000; padding: 10px 25px; border-radius: 8px; font-weight: 900; text-decoration: none; letter-spacing: 1px; transition: transform 0.2s; }
@@ -221,7 +229,7 @@
     </div>
 
     <div class="location-bar">
-        <button class="action-btn" id="gpsBtn" onclick="getLocation(false)">📍</button>
+        <button class="action-btn" id="gpsBtn" onclick="getLocation(false)" aria-label="Use my location">📍</button>
         <input type="text" id="locInput" placeholder="Αναζήτηση...">
         <button class="action-btn primary" id="searchBtn" onclick="searchLocation()">🔍</button>
         <button class="action-btn" onclick="toggleLang()" id="langBtn">EL</button>
@@ -245,7 +253,7 @@
                 <span id="rainStat">--%</span> 🌧️
             </div>
             <div class="stat-wind-row">
-                <span id="windStat">--</span> 
+                <span id="windStat">--</span>
                 <span class="wind-arrow" id="windArrow">⬇</span> 💨
             </div>
         </div>
@@ -308,25 +316,33 @@
 
     <div class="footer-section">
         <p id="donateText">Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις</p>
-        <a href="https://buymeacoffee.com/ursoalbo" target="_blank" class="donate-btn" id="donateBtn">ΕΔΩ</a>
+        <a href="https://buymeacoffee.com/ursoalbo" target="_blank" rel="noopener" class="donate-btn" id="donateBtn">ΕΔΩ</a>
         <div class="privacy-disclaimer" id="privacyText">
             Απόρρητο: Το VISOR δεν αποθηκεύει δεδομένα σε εξωτερικούς διακομιστές. Όλες οι τοποθεσίες και οι προτιμήσεις παραμένουν αυστηρά τοπικά στη συσκευή σας και κανείς δεν έχει πρόσβαση σε αυτά.
         </div>
     </div>
 
     <script>
-        let currentLang = 'el'; 
-        let currentLat = 37.9838; 
+        'use strict';
+
+        let currentLang = 'el';
+        let currentLat = 37.9838;
         let currentLon = 23.7275;
         let chartInstance = null;
-        let weatherDataCache = null; 
-        let selectedDayIndex = 0; 
-        let currentCityName = "Unknown";
-        let rawApiData = null; 
+        let weatherDataCache = null;
+        let selectedDayIndex = 0;
+        let rawApiData = null;
         let deferredPrompt = null;
         let isChartVisible = false;
         let isForecastVisible = false;
         let isFuelMenuVisible = false;
+
+        // Hours a road stays wet after rain stops ("wet road persistence")
+        const WET_ROAD_PERSISTENCE_HOURS = 2;
+        // Only refetch weather if GPS moved more than this (km)
+        const GPS_REFETCH_THRESHOLD_KM = 1;
+        // How often we re-check GPS (ms). Weather itself is only refetched on movement or manually.
+        const GPS_POLL_INTERVAL_MS = 5 * 60 * 1000;
 
         const STRINGS = {
             en: {
@@ -361,6 +377,9 @@
                 searchStr: "SEARCHING...",
                 noneStr: "NONE WITHIN 15KM",
                 errStr: "API ERROR",
+                errWeatherStr: "WEATHER ERROR — TAP TO RETRY",
+                gpsDenied: "Location permission denied",
+                notFound: "Location not found",
                 gasStation: "Gas Station",
                 medicalCenter: "Medical Facility",
                 donateText: "If you found VISOR useful, you can support it",
@@ -374,8 +393,8 @@
                 warnWind: "Ισχυρός Άνεμος",
                 warnFog: "Ομίχλη",
                 warnRain: "Πιθανή Βροχή",
-                warnStorm: "Έντονα Φαινόμενα", 
-                warnWet: "Υγρό Οδόστρωμα", 
+                warnStorm: "Έντονα Φαινόμενα",
+                warnWet: "Υγρό Οδόστρωμα",
                 days: ['Κυρ', 'Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ'],
                 today: "ΣΗΜΕΡΑ",
                 commuterTitle: "Χρονολογιο",
@@ -399,6 +418,9 @@
                 searchStr: "ΑΝΑΖΗΤΗΣΗ...",
                 noneStr: "ΚΑΝΕΝΑ ΣΤΑ 15km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
+                errWeatherStr: "ΣΦΑΛΜΑ ΚΑΙΡΟΥ — ΠΑΤΑ ΓΙΑ ΕΠΑΝΑΛΗΨΗ",
+                gpsDenied: "Άρνηση πρόσβασης στην τοποθεσία",
+                notFound: "Δεν βρέθηκε η τοποθεσία",
                 gasStation: "Βενζινάδικο",
                 medicalCenter: "Ιατρικό Κέντρο",
                 donateText: "Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις",
@@ -407,34 +429,60 @@
             }
         };
 
-        window.onload = () => {
+        // Greek motorway operators as data instead of hardcoded if/else chains.
+        // latMax/latMin segment the A1 corridor between different concessions.
+        const MOTORWAY_OPERATORS = [
+            { matchName: "αττική", matchRef: "A6", phone: "1077", opName: { el: "Αττική Οδός", en: "Attiki Odos" } },
+            { matchName: "εγνατία", matchRef: "A2", phone: "1077", opName: { el: "Εγνατία Οδός", en: "Egnatia Odos" } },
+            { matchName: "ολυμπία", matchRef: "A8", phone: "1024", opName: { el: "Ολυμπία Οδός", en: "Olympia Odos" } },
+            { matchName: "μορέας", matchRef: "A7", phone: "1025", opName: { el: "Μορέας (Α7)", en: "Moreas (A7)" } },
+            { matchName: "ιόνια", matchRef: "A5", phone: "1075", opName: { el: "Ιόνια Οδός", en: "Ionia Odos" } },
+            { matchRef: "A3", phone: "1075", opName: { el: "Κεντρική Οδός (E65)", en: "Central Road (E65)" } },
+            { matchRef: "A1", latSegments: [
+                { maxLat: 38.8, phone: "1075", opName: { el: "Νέα Οδός (Α1)", en: "Nea Odos (A1)" } },
+                { maxLat: 40.5, phone: "1144", opName: { el: "Αυτοκινητόδρομος Αιγαίου", en: "Aegean Motorway" } },
+                { maxLat: Infinity, phone: "1077", opName: { el: "Εγνατία Οδός / Α1", en: "Egnatia Odos / A1" } }
+            ]}
+        ];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            Chart.defaults.font.size = 13;
+            Chart.defaults.color = '#ccc';
+
             const savedLat = localStorage.getItem('motoLat');
             const savedLon = localStorage.getItem('motoLon');
             const savedName = localStorage.getItem('motoName');
-            
-            Chart.defaults.font.size = 13;
-            Chart.defaults.color = '#ccc';
-            
-            if(savedLat && savedLon) {
+
+            if (savedLat && savedLon) {
                 currentLat = parseFloat(savedLat);
                 currentLon = parseFloat(savedLon);
-                currentCityName = savedName || "Saved Location";
-                document.getElementById('currentLocDisplay').innerText = currentCityName;
+                document.getElementById('currentLocDisplay').innerText = `📍 ${savedName || "Saved Location"}`;
             } else {
                 currentLat = 37.9838;
                 currentLon = 23.7275;
-                currentCityName = "Athens, GR";
-                document.getElementById('currentLocDisplay').innerText = `📍 ${currentCityName}`;
+                document.getElementById('currentLocDisplay').innerText = "📍 Athens, GR";
             }
-            
-            fetchWeather();
-            getLocation(true); 
+
+            // Instant render from cached payload before hitting the network.
+            const cachedRaw = localStorage.getItem('motoWeatherCache');
+            const cachedLat = parseFloat(localStorage.getItem('motoWeatherLat'));
+            const cachedLon = parseFloat(localStorage.getItem('motoWeatherLon'));
+            if (cachedRaw && cachedLat === currentLat && cachedLon === currentLon) {
+                try {
+                    applyWeatherData(JSON.parse(cachedRaw), true);
+                } catch (e) { /* corrupted cache — ignore */ }
+            }
+
             updateStaticText();
-            
-            setInterval(() => {
-                getLocation(true);
-            }, 60000);
-        };
+            fetchWeather();
+            getLocation(true);
+
+            setInterval(() => getLocation(true), GPS_POLL_INTERVAL_MS);
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+            }
+        });
 
         const installBtnEl = document.getElementById('installBtn');
 
@@ -448,9 +496,7 @@
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                installBtnEl.style.display = 'none';
-            }
+            if (outcome === 'accepted') installBtnEl.style.display = 'none';
             deferredPrompt = null;
         });
 
@@ -461,22 +507,25 @@
 
         function toggleLang() {
             currentLang = currentLang === 'en' ? 'el' : 'en';
+            localStorage.setItem('motoLang', currentLang);
+            document.documentElement.lang = currentLang;
+            document.title = 'VISOR';
             updateStaticText();
-            if(weatherDataCache) renderDashboard(selectedDayIndex); 
+            if (weatherDataCache) renderDashboard(selectedDayIndex);
         }
-        
+
         function toggleChart() {
             isChartVisible = !isChartVisible;
             const wrapper = document.getElementById('chartWrapper');
             const btn = document.getElementById('chartToggleBtn');
             const t = STRINGS[currentLang];
-            
-            if(isChartVisible) {
+
+            if (isChartVisible) {
                 wrapper.classList.add('expanded');
-                btn.innerText = t.chartHide;
+                btn.textContent = t.chartHide;
             } else {
                 wrapper.classList.remove('expanded');
-                btn.innerText = t.chartShow;
+                btn.textContent = t.chartShow;
             }
         }
 
@@ -485,121 +534,167 @@
             const wrapper = document.getElementById('forecastWrapper');
             const btn = document.getElementById('forecastToggleBtn');
             const t = STRINGS[currentLang];
-            
-            if(isForecastVisible) {
+
+            if (isForecastVisible) {
                 wrapper.classList.add('expanded');
-                btn.innerText = t.forecastHide;
+                btn.textContent = t.forecastHide;
             } else {
                 wrapper.classList.remove('expanded');
-                btn.innerText = t.forecastShow;
+                btn.textContent = t.forecastShow;
             }
         }
 
         function toggleFuelMenu() {
             isFuelMenuVisible = !isFuelMenuVisible;
-            const wrapper = document.getElementById('fuelMenuWrapper');
-            if(isFuelMenuVisible) {
-                wrapper.classList.add('expanded');
-            } else {
-                wrapper.classList.remove('expanded');
-            }
+            document.getElementById('fuelMenuWrapper').classList.toggle('expanded', isFuelMenuVisible);
         }
 
         function updateStaticText() {
             const t = STRINGS[currentLang];
-            document.getElementById('langBtn').innerText = currentLang.toUpperCase();
+            document.getElementById('langBtn').textContent = currentLang.toUpperCase();
             document.getElementById('locInput').placeholder = t.placeholder;
-            document.getElementById('commuterTitle').innerText = t.commuterTitle;
-            document.getElementById('legTemp').innerText = t.legTemp;
-            document.getElementById('legRain').innerText = t.legRain;
-            document.getElementById('legNight').innerText = t.legNight;
-            document.getElementById('feelLabel').innerText = t.feels;
-            document.getElementById('donateText').innerText = t.donateText;
-            document.getElementById('donateBtn').innerText = t.donateBtn;
-            document.getElementById('privacyText').innerText = t.privacyText;
-            document.getElementById('chartToggleBtn').innerText = isChartVisible ? t.chartHide : t.chartShow;
-            document.getElementById('forecastToggleBtn').innerText = isForecastVisible ? t.forecastHide : t.forecastShow;
-            installBtnEl.innerText = t.installBtn;
-            
-            document.getElementById('btnPetrol').innerText = t.fuelPetrol;
-            document.getElementById('btnDiesel').innerText = t.fuelDiesel;
-            document.getElementById('btnLpg').innerText = t.fuelLpg;
-            document.getElementById('btnCng').innerText = t.fuelCng;
-            
+            document.getElementById('gpsBtn').setAttribute('aria-label', t.gpsLabel || 'Use my location');
+            document.getElementById('searchBtn').setAttribute('aria-label', t.searchLabel || 'Search');
+            document.getElementById('commuterTitle').textContent = t.commuterTitle;
+            document.getElementById('legTemp').textContent = t.legTemp;
+            document.getElementById('legRain').textContent = t.legRain;
+            document.getElementById('legNight').textContent = t.legNight;
+            document.getElementById('feelLabel').textContent = t.feels;
+            document.getElementById('donateText').textContent = t.donateText;
+            document.getElementById('donateBtn').textContent = t.donateBtn;
+            document.getElementById('privacyText').textContent = t.privacyText;
+            document.getElementById('chartToggleBtn').textContent = isChartVisible ? t.chartHide : t.chartShow;
+            document.getElementById('forecastToggleBtn').textContent = isForecastVisible ? t.forecastHide : t.forecastShow;
+            installBtnEl.textContent = t.installBtn;
+
+            document.getElementById('btnPetrol').textContent = t.fuelPetrol;
+            document.getElementById('btnDiesel').textContent = t.fuelDiesel;
+            document.getElementById('btnLpg').textContent = t.fuelLpg;
+            document.getElementById('btnCng').textContent = t.fuelCng;
+
             resetActionButtons();
         }
 
         function resetActionButtons() {
             const t = STRINGS[currentLang];
-            
+
             const btnF = document.getElementById('fuelBtn');
-            btnF.innerText = t.fuelBtn;
-            btnF.style.background = "#1a1a1a";
-            btnF.style.color = "var(--accent-warn)";
+            btnF.className = 'full-btn btn-fuel';
+            btnF.textContent = t.fuelBtn;
             btnF.onclick = toggleFuelMenu;
 
             const btnM = document.getElementById('medBtn');
-            btnM.innerText = t.medBtn;
-            btnM.style.background = "#1a1a1a";
-            btnM.style.color = "var(--accent-risk)";
+            btnM.className = 'full-btn btn-med';
+            btnM.textContent = t.medBtn;
             btnM.onclick = findMedical;
 
             const btnS = document.getElementById('sosBtn');
-            btnS.innerText = t.sosBtn;
-            btnS.style.background = "#1a1a1a";
-            btnS.style.color = "var(--accent-cold)";
+            btnS.className = 'full-btn btn-sos';
+            btnS.textContent = t.sosBtn;
             btnS.onclick = findSOS;
         }
 
-        async function fetchWeather() {
-            document.getElementById('loader').style.display = 'block';
-            document.getElementById('scoreCard').style.opacity = '0.5';
+        function setBtnSearching(btn) {
+            btn.classList.add('searching');
+            btn.textContent = STRINGS[currentLang].searchStr;
+        }
 
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weathercode,windgusts_10m,winddirection_10m,visibility&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=4`;
+        function setBtnError(btn) {
+            const t = STRINGS[currentLang];
+            btn.classList.remove('searching');
+            btn.textContent = t.errStr;
+            setTimeout(() => { btn.classList.remove('result'); resetActionButtons(); }, 3000);
+        }
+
+        async function fetchWeather(isRetry = false) {
+            const loader = document.getElementById('loader');
+            const scoreCard = document.getElementById('scoreCard');
+            loader.style.display = 'block';
+            scoreCard.style.opacity = '0.5';
+
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weathercode,windgusts_10m,winddirection_10m,visibility&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=4`;
 
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error("HTTP " + response.status);
                 const data = await response.json();
-                rawApiData = data; 
-                processData(data);
-                updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
-                resetActionButtons();
+                applyWeatherData(data, false);
+                try {
+                    localStorage.setItem('motoWeatherCache', JSON.stringify(data));
+                    localStorage.setItem('motoWeatherLat', String(currentLat));
+                    localStorage.setItem('motoWeatherLon', String(currentLon));
+                    localStorage.setItem('motoWeatherTime', String(Date.now()));
+                } catch (e) { /* storage full/blocked — non-fatal */ }
             } catch (error) {
                 console.error(error);
+                if (!rawApiData || isRetry) {
+                    showWeatherRetryButton();
+                }
             } finally {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('scoreCard').style.opacity = '1';
+                loader.style.display = 'none';
+                scoreCard.style.opacity = '1';
+            }
+        }
+
+        function showWeatherRetryButton() {
+            const alertsCont = document.getElementById('alertsContainer');
+            alertsCont.innerHTML = '';
+            const badge = document.createElement('div');
+            badge.className = 'badge risk';
+            badge.style.cursor = 'pointer';
+            badge.setAttribute('role', 'button');
+            badge.textContent = STRINGS[currentLang].errWeatherStr;
+            badge.onclick = () => { badge.remove(); fetchWeather(true); };
+            alertsCont.appendChild(badge);
+        }
+
+        // Central entry point for both fresh fetches and cached payloads.
+        function applyWeatherData(data, fromCache) {
+            rawApiData = data;
+            processData(data);
+            updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
+            resetActionButtons();
+            if (fromCache) {
+                // Data may be stale — refresh quietly in the background.
+                fetchWeather(false);
             }
         }
 
         function processData(data) {
-            let structuredDays = [];
+            const structuredDays = [];
 
             for (let d = 0; d < 4; d++) {
-                let startIdx = d * 24;
-                let endIdx = startIdx + 24;
-                
+                const startIdx = d * 24;
+                const endIdx = startIdx + 24;
+
                 const sunrise = new Date(data.daily.sunrise[d]).getHours();
                 const sunset = new Date(data.daily.sunset[d]).getHours();
 
-                let dayObj = {
+                const dayObj = {
                     date: data.daily.time[d],
                     sunrise: sunrise,
                     sunset: sunset,
                     dailyMin: Math.round(data.daily.temperature_2m_min[d]),
                     dailyMax: Math.round(data.daily.temperature_2m_max[d]),
+                    dailyFeelMin: data.daily.apparent_temperature_min !== undefined
+                        ? Math.round(data.daily.apparent_temperature_min[d]) : null,
+                    dailyFeelMax: data.daily.apparent_temperature_max !== undefined
+                        ? Math.round(data.daily.apparent_temperature_max[d]) : null,
                     dailyRainProb: data.daily.precipitation_probability_max[d],
                     hourly: {
-                        times: [], temps: [], rain: [], wind: [], vis: [], wetRoad: []
+                        times: [], hours: [], temps: [], feels: [], rain: [], wind: [], vis: [], wetRoad: []
                     },
                     stats: {
-                        maxWind: 0, avgWindDir: 0, minTemp: 100, minFeel: 100,
+                        maxWind: 0, avgWindDir: 0, minTemp: Infinity, minFeel: Infinity,
                         hasRain: false, isStorm: false, hasWetRoad: false, alerts: []
                     }
                 };
 
-                let windDirSum = 0;
-                let count = 0;
+                // Vector averaging for wind direction (fixes wrap-around bug:
+                // averaging 350° and 10° arithmetically gives 180° — wrong quadrant).
+                let sinSum = 0, cosSum = 0, count = 0;
+                // Wet-road persistence state machine
+                let hoursSinceLastHeavyRain = Infinity;
 
                 for (let h = startIdx; h < endIdx; h++) {
                     if (!data.hourly.time[h]) continue;
@@ -612,21 +707,28 @@
                     const dir = data.hourly.winddirection_10m[h];
                     const vis = data.hourly.visibility[h];
                     const code = data.hourly.weathercode[h];
-                    
                     const dateObj = new Date(data.hourly.time[h]);
+
                     dayObj.hourly.times.push(dateObj.getHours() + ':00');
+                    dayObj.hourly.hours.push(dateObj.getHours());
                     dayObj.hourly.temps.push(temp);
+                    dayObj.hourly.feels.push(Math.round(feel));
                     dayObj.hourly.rain.push(rainP);
-                    
-                    let isWet = false;
-                    if (h > 0) {
-                        const prevPrecip = data.hourly.precipitation[h-1];
-                        if (prevPrecip > 1.5) isWet = true; 
+
+                    if (precipAmount > 1.5) {
+                        hoursSinceLastHeavyRain = 0;
+                    } else if (hoursSinceLastHeavyRain < Infinity) {
+                        hoursSinceLastHeavyRain++;
                     }
-                    if (precipAmount > 0.5) isWet = true; 
-                    
+
+                    // Roads stay wet for WET_ROAD_PERSISTENCE_HOURS after heavy rain,
+                    // or immediately during meaningful rainfall itself.
+                    let isWet = false;
+                    if (hoursSinceLastHeavyRain <= WET_ROAD_PERSISTENCE_HOURS) isWet = true;
+                    if (precipAmount > 0.5) isWet = true;
+
                     dayObj.hourly.wetRoad.push(isWet);
-                    if(isWet) dayObj.stats.hasWetRoad = true;
+                    if (isWet) dayObj.stats.hasWetRoad = true;
 
                     if (gust > dayObj.stats.maxWind) dayObj.stats.maxWind = gust;
                     if (temp < dayObj.stats.minTemp) dayObj.stats.minTemp = temp;
@@ -634,7 +736,9 @@
                     if (rainP > 40) dayObj.stats.hasRain = true;
                     if ([95, 96, 99, 71, 73, 75, 77].includes(code)) dayObj.stats.isStorm = true;
 
-                    windDirSum += dir;
+                    const rad = dir * Math.PI / 180;
+                    sinSum += Math.sin(rad);
+                    cosSum += Math.cos(rad);
                     count++;
 
                     if (temp < 0 && !dayObj.stats.alerts.includes('freeze')) dayObj.stats.alerts.push('freeze');
@@ -643,13 +747,15 @@
                     if (vis < 1000 && !dayObj.stats.alerts.includes('fog')) dayObj.stats.alerts.push('fog');
                 }
 
-                dayObj.stats.avgWindDir = count > 0 ? windDirSum / count : 0;
+                dayObj.stats.avgWindDir = count > 0
+                    ? ((Math.atan2(sinSum / count, cosSum / count) * 180 / Math.PI) + 360) % 360
+                    : 0;
                 structuredDays.push(dayObj);
             }
 
             weatherDataCache = structuredDays;
-            renderForecastList(); 
-            selectDay(0); 
+            renderForecastList();
+            selectDay(Math.min(selectedDayIndex, structuredDays.length - 1));
         }
 
         function selectDay(index) {
@@ -659,7 +765,7 @@
         }
 
         function renderDashboard(dayIndex) {
-            if(!weatherDataCache || !rawApiData) return;
+            if (!weatherDataCache || !rawApiData) return;
             const t = STRINGS[currentLang];
             const dayData = weatherDataCache[dayIndex];
             const stats = dayData.stats;
@@ -667,50 +773,58 @@
             const dateObj = new Date(dayData.date);
             const dayName = t.days[dateObj.getDay()];
             const headerText = dayIndex === 0 ? `${t.today} (${dayName})` : dayName + ` ${dateObj.getDate()}`;
-            document.getElementById('dateLabel').innerText = headerText;
+            document.getElementById('dateLabel').textContent = headerText;
 
             let displayTemp, displayFeel;
             if (dayIndex === 0) {
-                const nowIsoString = new Date().toISOString().slice(0, 14) + "00"; 
-                let currentHourIdx = rawApiData.hourly.time.findIndex(t => t.startsWith(nowIsoString.slice(0, 13)));
-                if (currentHourIdx === -1) currentHourIdx = 0; 
-                
+                const nowIsoPrefix = new Date().toISOString().slice(0, 13);
+                let currentHourIdx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
+                if (currentHourIdx === -1) currentHourIdx = 0;
+
                 displayTemp = Math.round(rawApiData.hourly.temperature_2m[currentHourIdx]);
                 displayFeel = Math.round(rawApiData.hourly.apparent_temperature[currentHourIdx]);
             } else {
                 displayTemp = dayData.dailyMax;
-                displayFeel = dayData.dailyMax;
+                // Real apparent-temperature range for forecast days instead of faking it.
+                displayFeel = dayData.dailyFeelMin !== null ? dayData.dailyFeelMin : dayData.dailyMax;
             }
 
-            document.getElementById('tempStat').innerText = displayTemp;
-            document.getElementById('feelStat').innerText = displayFeel + "°";
-            document.getElementById('windStat').innerText = Math.round(stats.maxWind) + " km/h";
-            document.getElementById('rainStat').innerText = dayData.dailyRainProb + "%";
+            document.getElementById('tempStat').textContent = displayTemp;
+            document.getElementById('feelStat').textContent = displayFeel + "°";
+            document.getElementById('windStat').textContent = Math.round(stats.maxWind) + " km/h";
+            document.getElementById('rainStat').textContent = dayData.dailyRainProb + "%";
+            // Arrow points where the wind blows TO (direction of origin + 180°).
             document.getElementById('windArrow').style.transform = `rotate(${stats.avgWindDir + 180}deg)`;
 
             const barContainer = document.getElementById('commuterBar');
             const axisContainer = document.getElementById('commuterAxis');
             barContainer.innerHTML = '';
             axisContainer.innerHTML = '';
-            
-            for(let i=0; i<dayData.hourly.times.length; i++) {
+
+            const nowHour = dayIndex === 0 ? new Date().getHours() : -1;
+
+            for (let i = 0; i < dayData.hourly.times.length; i++) {
                 const hourDiv = document.createElement('div');
                 hourDiv.className = 'hour-block';
                 const hTemp = dayData.hourly.temps[i];
                 const hRainP = dayData.hourly.rain[i];
                 const isWet = dayData.hourly.wetRoad[i];
-                
-                let bg = 'var(--accent-safe)'; 
-                if(hTemp < 10) bg = 'var(--accent-warn)';
-                if(hRainP > 40 || isWet) bg = 'var(--accent-risk)';
-                
+
+                let bg = 'var(--accent-safe)';
+                if (hTemp < 10) bg = 'var(--accent-warn)';
+                if (hRainP > 40 || isWet) bg = 'var(--accent-risk)';
+
                 hourDiv.style.background = bg;
+                // Dim hours that have already passed on today's timeline.
+                if (dayData.hourly.hours[i] < nowHour) hourDiv.classList.add('past');
+                hourDiv.title = `${dayData.hourly.times[i]} · ${Math.round(hTemp)}° · ${hRainP}%`;
                 barContainer.appendChild(hourDiv);
 
                 const axisDiv = document.createElement('div');
                 axisDiv.className = 'axis-tick';
-                if (i % 3 === 0) { 
-                    axisDiv.innerText = i; 
+                // Label ticks with the REAL hour, not the array index.
+                if (dayData.hourly.hours[i] % 3 === 0) {
+                    axisDiv.textContent = dayData.hourly.hours[i];
                     axisDiv.classList.add('visible');
                 }
                 axisContainer.appendChild(axisDiv);
@@ -726,7 +840,7 @@
             if (stats.alerts.includes('fog')) createBadge(t.warnFog, 'warn');
             if (stats.hasRain && !stats.isStorm) createBadge(t.warnRain, 'warn');
             if (stats.alerts.includes('cold') && !stats.alerts.includes('freeze')) createBadge(t.warnCold, 'cold');
-            if (alertsCont.innerHTML === '') createBadge(t.safe, 'safe');
+            if (alertsCont.children.length === 0) createBadge(t.safe, 'safe');
 
             drawChart(dayData);
         }
@@ -734,7 +848,7 @@
         function createBadge(text, type) {
             const badge = document.createElement('div');
             badge.className = `badge ${type}`;
-            badge.innerText = text;
+            badge.textContent = text; // textContent — no injection risk
             document.getElementById('alertsContainer').appendChild(badge);
         }
 
@@ -746,21 +860,21 @@
                 const yAxis = chart.scales.y;
                 const top = yAxis.top;
                 const bottom = yAxis.bottom;
-                
-                if(!weatherDataCache) return;
+
+                if (!weatherDataCache) return;
                 const dayData = weatherDataCache[selectedDayIndex];
                 const sunrise = dayData.sunrise;
                 const sunset = dayData.sunset;
 
                 chart.data.labels.forEach((label, index) => {
                     const hour = parseInt(label.split(':')[0]);
-                    if(hour < sunrise || hour >= sunset) {
-                         const xStart = xAxis.getPixelForValue(index);
-                         let width = 0;
-                         if (index < chart.data.labels.length - 1) width = xAxis.getPixelForValue(index+1) - xStart;
-                         else width = xStart - xAxis.getPixelForValue(index-1);
-                         ctx.fillStyle = 'rgba(20, 30, 60, 0.4)';
-                         ctx.fillRect(xStart - width/2, top, width, bottom - top);
+                    if (hour < sunrise || hour >= sunset) {
+                        const xStart = xAxis.getPixelForValue(index);
+                        let width = 0;
+                        if (index < chart.data.labels.length - 1) width = xAxis.getPixelForValue(index + 1) - xStart;
+                        else width = xStart - xAxis.getPixelForValue(index - 1);
+                        ctx.fillStyle = 'rgba(20, 30, 60, 0.4)';
+                        ctx.fillRect(xStart - width / 2, top, width, bottom - top);
                     }
                 });
 
@@ -768,9 +882,9 @@
                     const currentHour = new Date().getHours();
                     const nowLabel = currentHour + ':00';
                     const idx = chart.data.labels.indexOf(nowLabel);
-                    if(idx >= 0) {
+                    if (idx >= 0) {
                         const xPos = xAxis.getPixelForValue(idx);
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)'; 
+                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
                         ctx.fillRect(xAxis.left, top, xPos - xAxis.left, bottom - top);
                         ctx.beginPath();
                         ctx.moveTo(xPos, top);
@@ -786,7 +900,7 @@
 
         function drawChart(dayData) {
             const ctx = document.getElementById('weatherChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
+            if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
@@ -799,7 +913,7 @@
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#222', titleColor:'#fff', bodyColor:'#ccc' } },
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#222', titleColor: '#fff', bodyColor: '#ccc' } },
                     scales: {
                         x: { ticks: { color: '#ccc', maxTicksLimit: 8 }, grid: { display: false } },
                         y: { type: 'linear', display: true, position: 'left', ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.1)' } },
@@ -818,28 +932,36 @@
             weatherDataCache.forEach((dayData, index) => {
                 const date = new Date(dayData.date);
                 let dayName = t.days[date.getDay()];
-                if(index === 0) dayName = t.today;
-                
+                if (index === 0) dayName = t.today;
+
                 const div = document.createElement('div');
                 div.className = 'forecast-item';
                 div.id = `day-btn-${index}`;
-                div.onclick = () => selectDay(index); 
-                
-                div.innerHTML = `
-                    <div class="f-day">${dayName}</div>
-                    <div class="f-detail">
-                        <span style="color:#aaa;">${dayData.dailyMin}° / ${dayData.dailyMax}°</span>
-                    </div>
-                `;
+                div.onclick = () => selectDay(index);
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'f-day';
+                dayDiv.textContent = dayName;
+
+                const detailDiv = document.createElement('div');
+                detailDiv.className = 'f-detail';
+                const tempSpan = document.createElement('span');
+                tempSpan.style.color = '#aaa';
+                const feelSuffix = dayData.dailyFeelMin !== null ? ` (feels ${dayData.dailyFeelMin}°)` : '';
+                tempSpan.textContent = `${dayData.dailyMin}° / ${dayData.dailyMax}°${feelSuffix}`;
+                detailDiv.appendChild(tempSpan);
+
+                div.appendChild(dayDiv);
+                div.appendChild(detailDiv);
                 list.appendChild(div);
             });
         }
 
         function updateListSelection(selectedIndex) {
-            for(let i=0; i<4; i++) {
+            for (let i = 0; i < 4; i++) {
                 const el = document.getElementById(`day-btn-${i}`);
-                if(el) {
-                    if(i === selectedIndex) el.classList.add('active');
+                if (el) {
+                    if (i === selectedIndex) el.classList.add('active');
                     else el.classList.remove('active');
                 }
             }
@@ -853,33 +975,71 @@
             const currentMins = now.getHours() * 60 + now.getMinutes();
             const riseMins = sunrise.getHours() * 60 + sunrise.getMinutes();
             const setMins = sunset.getHours() * 60 + sunset.getMinutes();
-            const transition = 60; 
+            const transition = 60;
             let gradient = '';
 
             if (currentMins < riseMins - transition) gradient = "linear-gradient(to bottom, #000000, #080a10)";
-            else if (currentMins < riseMins + transition) gradient = "linear-gradient(to bottom, #0f0c29, #302b63, #24243e)"; 
-            else if (currentMins < setMins - transition) gradient = "linear-gradient(to bottom, #1a1a1a, #252525)"; 
-            else if (currentMins < setMins + transition) gradient = "linear-gradient(to bottom, #203a43, #2c5364)"; 
+            else if (currentMins < riseMins + transition) gradient = "linear-gradient(to bottom, #0f0c29, #302b63, #24243e)";
+            else if (currentMins < setMins - transition) gradient = "linear-gradient(to bottom, #1a1a1a, #252525)";
+            else if (currentMins < setMins + transition) gradient = "linear-gradient(to bottom, #203a43, #2c5364)";
             else gradient = "linear-gradient(to bottom, #000000, #080a10)";
 
             document.body.style.background = gradient;
         }
 
         function haversineDist(lat1, lon1, lat2, lon2) {
-            const R = 6371; 
+            const R = 6371;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                      Math.sin(dLon/2) * Math.sin(dLon/2);
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        async function overpassQuery(query) {
+            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error("HTTP Status " + res.status);
+            return res.json();
+        }
+
+        // Generic nearest-element finder shared by fuel / medical searches.
+        function findNearestElement(data) {
+            let nearest = null;
+            let minDist = Infinity;
+            (data.elements || []).forEach(el => {
+                const lat = el.lat ?? el.center?.lat;
+                const lon = el.lon ?? el.center?.lon;
+                if (lat != null && lon != null) {
+                    const d = haversineDist(currentLat, currentLon, lat, lon);
+                    if (d < minDist) {
+                        minDist = d;
+                        nearest = { lat, lon, tags: el.tags || {} };
+                    }
+                }
+            });
+            return nearest ? { ...nearest, dist: minDist } : null;
+        }
+
+        // Renders a POI result onto a button; falls back to the "none found" state.
+        function presentPoiResult(btn, nearest, fallbackName, icon, mapsUrl) {
+            const t = STRINGS[currentLang];
+            if (!nearest) {
+                btn.textContent = t.noneStr;
+                setTimeout(resetActionButtons, 3000);
+                return;
+            }
+            const stName = nearest.tags.name || nearest.tags.brand || fallbackName;
+            btn.classList.remove('searching');
+            btn.classList.add('result');
+            btn.textContent = `${icon} ${stName} (${nearest.dist.toFixed(1)}km) ➔ GO`;
+            btn.onclick = () => window.open(mapsUrl, '_blank', 'noopener');
         }
 
         async function findSpecificFuel(type) {
             const btn = document.getElementById('fuelBtn');
-            const t = STRINGS[currentLang];
-            btn.innerText = t.searchStr;
-            btn.onclick = null; 
+            setBtnSearching(btn);
 
             isFuelMenuVisible = false;
             document.getElementById('fuelMenuWrapper').classList.remove('expanded');
@@ -889,203 +1049,174 @@
             if (type === 'cng') tagFilter = '["amenity"="fuel"]["fuel:cng"="yes"]';
 
             const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})${tagFilter};way(around:15000,${currentLat},${currentLon})${tagFilter};);out center;`;
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("HTTP Status " + res.status);
-                const data = await res.json();
-
-                if (!data.elements || data.elements.length === 0) {
-                    btn.innerText = t.noneStr;
-                    setTimeout(resetActionButtons, 3000);
-                    return;
-                }
-
-                let nearest = null;
-                let minDist = Infinity;
-
-                data.elements.forEach(el => {
-                    let lat = el.lat || el.center?.lat;
-                    let lon = el.lon || el.center?.lon;
-                    if (lat && lon) {
-                        const d = haversineDist(currentLat, currentLon, lat, lon);
-                        if (d < minDist) {
-                            minDist = d;
-                            nearest = el;
-                        }
-                    }
-                });
-
-                if (!nearest) {
-                    btn.innerText = t.noneStr;
-                    setTimeout(resetActionButtons, 3000);
-                    return;
-                }
-
-                const stName = nearest.tags?.name || nearest.tags?.brand || t.gasStation;
-                const distStr = minDist.toFixed(1);
-                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat || nearest.center.lat},${nearest.lon || nearest.center.lon}`;
-
-                let fuelIcon = '⛽';
-                if (type === 'lpg' || type === 'cng') fuelIcon = '♻️';
-
-                btn.innerHTML = `${fuelIcon} ${stName} (${distStr}km) ➔ GO`;
-                btn.style.background = "#fff";
-                btn.style.color = "#000";
-                btn.onclick = () => window.open(mapsUrl, '_blank');
-
+                const data = await overpassQuery(query);
+                const nearest = findNearestElement(data);
+                const mapsUrl = nearest
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`
+                    : '';
+                const fuelIcon = (type === 'lpg' || type === 'cng') ? '♻️' : '⛽';
+                presentPoiResult(btn, nearest, STRINGS[currentLang].gasStation, fuelIcon, mapsUrl);
             } catch (e) {
-                btn.innerText = t.errStr;
-                setTimeout(resetActionButtons, 3000);
+                console.error(e);
+                setBtnError(btn);
             }
         }
 
         async function findMedical() {
             const btn = document.getElementById('medBtn');
-            const t = STRINGS[currentLang];
-            btn.innerText = t.searchStr;
-            btn.onclick = null; 
+            setBtnSearching(btn);
 
             const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];way(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];rel(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];);out center;`;
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
 
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("HTTP Status " + res.status);
-                const data = await res.json();
-
-                if (!data.elements || data.elements.length === 0) {
-                    btn.innerText = t.noneStr;
-                    setTimeout(resetActionButtons, 3000);
-                    return;
-                }
-
-                let nearest = null;
-                let minDist = Infinity;
-
-                data.elements.forEach(el => {
-                    let lat = el.lat || el.center?.lat;
-                    let lon = el.lon || el.center?.lon;
-                    if (lat && lon) {
-                        const d = haversineDist(currentLat, currentLon, lat, lon);
-                        if (d < minDist) {
-                            minDist = d;
-                            nearest = { lat, lon, tags: el.tags };
-                        }
-                    }
-                });
-
-                if (!nearest) {
-                    btn.innerText = t.noneStr;
-                    setTimeout(resetActionButtons, 3000);
-                    return;
-                }
-
-                const stName = nearest.tags?.name || t.medicalCenter;
-                const distStr = minDist.toFixed(1);
-                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`;
-
-                btn.innerHTML = `🏥 ${stName} (${distStr}km) ➔ GO`;
-                btn.style.background = "#fff";
-                btn.style.color = "#000";
-                btn.onclick = () => window.open(mapsUrl, '_blank');
-
+                const data = await overpassQuery(query);
+                const nearest = findNearestElement(data);
+                const mapsUrl = nearest
+                    ? `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`
+                    : '';
+                presentPoiResult(btn, nearest, STRINGS[currentLang].medicalCenter, '🏥', mapsUrl);
             } catch (e) {
-                btn.innerText = t.errStr;
-                setTimeout(resetActionButtons, 3000);
+                console.error(e);
+                setBtnError(btn);
             }
         }
 
         async function findSOS() {
             const btn = document.getElementById('sosBtn');
-            const t = STRINGS[currentLang];
-            btn.innerText = t.searchStr;
-            btn.onclick = null; 
-            
-            const query = `[out:json][timeout:10];way(around:100,${currentLat},${currentLon})["highway"="motorway"];out;`;
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-            
+            setBtnSearching(btn);
+
+            // 300m radius: catches motorways you're travelling alongside,
+            // not just ones you're standing exactly on top of.
+            const query = `[out:json][timeout:10];way(around:300,${currentLat},${currentLon})["highway"="motorway"];out center;`;
+
             try {
-                const res = await fetch(url);
-                if (!res.ok) throw new Error("HTTP Status " + res.status);
-                const data = await res.json();
-                
-                let phone = "112";
-                let opName = "112 (SOS)";
-                
-                if (data.elements && data.elements.length > 0) {
-                    const way = data.elements[0];
-                    const name = (way.tags?.name || "").toLowerCase();
-                    const ref = (way.tags?.ref || "").toUpperCase();
-                    
-                    if (name.includes("αττική") || ref.includes("A6")) { phone = "1077"; opName = "Αττική Οδός"; }
-                    else if (name.includes("εγνατία") || ref.includes("A2")) { phone = "1077"; opName = "Εγνατία Οδός"; }
-                    else if (name.includes("ολυμπία") || ref.includes("A8")) { phone = "1024"; opName = "Ολυμπία Οδός"; }
-                    else if (name.includes("μορέας") || ref.includes("A7")) { phone = "1025"; opName = "Μορέας (Α7)"; }
-                    else if (name.includes("ιόνια") || ref.includes("A5")) { phone = "1075"; opName = "Ιόνια Οδός"; }
-                    else if (ref.includes("A3")) { phone = "1075"; opName = "Κεντρική Οδός (E65)"; }
-                    else if (ref.includes("A1")) {
-                        if (currentLat < 38.8) { phone = "1075"; opName = "Νέα Οδός (Α1)"; }
-                        else if (currentLat < 40.5) { phone = "1144"; opName = "Αυτοκινητόδρομος Αιγαίου"; }
-                        else { phone = "1077"; opName = "Εγνατία Οδός / Α1"; }
+                const data = await overpassQuery(query);
+                resolveAndDialSOS(btn, data.elements || []);
+            } catch (e) {
+                console.error(e);
+                dialSOS(btn, "112", "112 (SOS)");
+            }
+        }
+
+        function dialSOS(btn, phone, opName) {
+            btn.classList.remove('searching');
+            btn.classList.add('result');
+            btn.textContent = `📞 ${opName} ➔ ${phone}`;
+            btn.onclick = () => { window.location.href = `tel:${phone}`; };
+        }
+
+        function resolveAndDialSOS(btn, elements) {
+            let matchedOp = null;
+
+            if (elements.length > 0) {
+                // Pick the CLOSEST motorway way, not whichever Overpass returns first.
+                let closestWay = null;
+                let minDist = Infinity;
+                elements.forEach(el => {
+                    const lat = el.lat ?? el.center?.lat;
+                    const lon = el.lon ?? el.center?.lon;
+                    if (lat == null || lon == null) return;
+                    const d = haversineDist(currentLat, currentLon, lat, lon);
+                    if (d < minDist) { minDist = d; closestWay = el; }
+                });
+
+                if (closestWay) {
+                    const name = (closestWay.tags?.name || "").toLowerCase();
+                    const ref = (closestWay.tags?.ref || "").toUpperCase();
+
+                    for (const op of MOTORWAY_OPERATORS) {
+                        const nameHit = op.matchName && name.includes(op.matchName);
+                        const refHit = op.matchRef && ref.includes(op.matchRef);
+                        if (nameHit || refHit) {
+                            if (op.latSegments) {
+                                matchedOp = op.latSegments.find(seg => currentLat < seg.maxLat) || null;
+                            } else {
+                                matchedOp = op;
+                            }
+                            break;
+                        }
                     }
                 }
-                
-                btn.innerHTML = `📞 ${opName} ➔ ${phone}`;
-                btn.style.background = "#fff";
-                btn.style.color = "#000";
-                btn.onclick = () => window.location.href = `tel:${phone}`;
-                
-            } catch (e) {
-                btn.innerHTML = `📞 112 (SOS)`;
-                btn.style.background = "#fff";
-                btn.style.color = "#000";
-                btn.onclick = () => window.location.href = `tel:112`;
+            }
+
+            if (matchedOp) {
+                dialSOS(btn, matchedOp.phone, matchedOp.opName[currentLang] || matchedOp.opName.el);
+            } else {
+                dialSOS(btn, "112", "112 (SOS)");
             }
         }
 
         function getLocation(silent = false) {
-            if (navigator.geolocation) {
-                if(!silent) document.getElementById('currentLocDisplay').innerText = "Locating...";
-                navigator.geolocation.getCurrentPosition(p => {
-                    currentLat = p.coords.latitude;
-                    currentLon = p.coords.longitude;
-                    localStorage.setItem('motoLat', currentLat);
-                    localStorage.setItem('motoLon', currentLon);
-                    localStorage.setItem('motoName', "GPS Location");
-                    currentCityName = "GPS Location";
-                    document.getElementById('currentLocDisplay').innerText = "📍 GPS Location";
+            if (!navigator.geolocation) return;
+
+            if (!silent) document.getElementById('currentLocDisplay').innerText = "Locating...";
+            navigator.geolocation.getCurrentPosition(p => {
+                const movedKm = haversineDist(currentLat, currentLon, p.coords.latitude, p.coords.longitude);
+
+                currentLat = p.coords.latitude;
+                currentLon = p.coords.longitude;
+                localStorage.setItem('motoLat', currentLat);
+                localStorage.setItem('motoLon', currentLon);
+                localStorage.setItem('motoName', "GPS Location");
+                document.getElementById('currentLocDisplay').innerText = "📍 GPS Location";
+
+                // Refetch weather only if we actually moved meaningfully —
+                // avoids snapping the UI back to "today" every poll cycle
+                // and spares battery/API quota.
+                if (movedKm > GPS_REFETCH_THRESHOLD_KM) {
+                    selectedDayIndex = 0; // new place → start from today
                     fetchWeather();
-                }, () => {
-                    if (!silent) alert("Denied");
-                });
-            }
+                }
+            }, () => {
+                if (!silent) showToast(STRINGS[currentLang].gpsDenied);
+            }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 });
         }
 
         async function searchLocation() {
-            const query = document.getElementById('locInput').value;
-            if(!query) return;
-            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${query}&count=1&language=el&format=json`;
+            const query = document.getElementById('locInput').value.trim();
+            if (!query) return;
+            const encoded = encodeURIComponent(query);
+            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encoded}&count=1&language=${currentLang}&format=json`;
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                if(data.results && data.results.length > 0) {
+                if (data.results && data.results.length > 0) {
                     const place = data.results[0];
                     currentLat = place.latitude;
                     currentLon = place.longitude;
                     const name = `${place.name}, ${place.country_code}`;
-                    currentCityName = name;
                     document.getElementById('currentLocDisplay').innerText = `📍 ${name}`;
                     localStorage.setItem('motoLat', currentLat);
                     localStorage.setItem('motoLon', currentLon);
                     localStorage.setItem('motoName', name);
+                    selectedDayIndex = 0;
                     fetchWeather();
                 } else {
-                    alert("Not Found");
+                    showToast(STRINGS[currentLang].notFound);
                 }
-            } catch(e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                showToast(STRINGS[currentLang].errStr);
+            }
         }
+
+        // Non-blocking toast in the alerts row, replacing jarring alert() calls.
+        function showToast(message) {
+            const cont = document.getElementById('alertsContainer');
+            const badge = document.createElement('div');
+            badge.className = 'badge warn';
+            badge.textContent = message;
+            badge.onclick = () => badge.remove();
+            cont.prepend(badge);
+            setTimeout(() => badge.remove(), 5000);
+        }
+
+        // Enter key submits the location search.
+        document.getElementById('locInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') searchLocation();
+        });
     </script>
 </body>
 </html>
