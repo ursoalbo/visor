@@ -4,38 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>VISOR</title>
-
+    
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="shortcut icon" href="favicon.ico">
-
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#000000">
-
-    <!-- Chart.js pinned to an exact version so the app never breaks on upstream releases -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-
+    <meta name="theme-color" content="#0b0b0b">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    
     <style>
         :root {
-            /* Radius scale (#11): only three radii in the whole app */
-            --r-sm: 8px;
-            --r-md: 12px;
-            --r-lg: 20px;
-
-            --bg-color: #121212;
-            --card-bg: rgba(30, 30, 30, 0.7);
-            --card-hover: rgba(50, 50, 50, 0.8);
+            --bg-color: #0b0b0b;
+            --card-bg: #18181b;
+            --card-hover: #27272a;
+            --border-subtle: rgba(255, 255, 255, 0.12);
             --text-main: #ffffff;
-            --text-dim: #bbbbbb;
-            --accent-safe: #00ff9d;
-            --accent-warn: #ffca00;
-            --accent-risk: #ff5e5e;
-            --accent-cold: #00d5ff;
-            --commuter-bg: rgba(0,0,0,0.5);
+            --text-dim: #a1a1aa; 
+            --accent-safe: #00ff9d; 
+            --accent-warn: #ffca00; 
+            --accent-risk: #ff5e5e; 
+            --accent-cold: #00d5ff; 
         }
 
         * { box-sizing: border-box; }
@@ -50,7 +43,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            transition: background 1s ease;
+            transition: background 0.8s ease;
             -webkit-tap-highlight-color: transparent;
         }
 
@@ -58,35 +51,46 @@
             width: 100%;
             max-width: 600px;
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            position: relative;
+            margin-bottom: 14px;
         }
-        h1 { margin: 0; font-size: 2rem; letter-spacing: 4px; font-weight:900; font-style: italic; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        h1 { margin: 0; font-size: 1.9rem; letter-spacing: 4px; font-weight: 900; font-style: italic; }
+        
+        .ride-status-pill {
+            font-size: 0.8rem;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid currentColor;
+        }
 
         .location-bar {
             width: 100%;
             max-width: 600px;
             display: flex;
             gap: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         #locInput {
             flex: 1;
             padding: 14px;
             font-size: 1rem;
-            border-radius: var(--r-md);
-            border: none;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
             background: var(--card-bg);
             color: white;
             min-width: 0;
-            backdrop-filter: blur(5px);
+            outline: none;
         }
+        #locInput:focus { border-color: var(--accent-safe); }
+
         .action-btn {
             padding: 0 16px;
-            border-radius: var(--r-md);
-            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
             background: var(--card-bg);
             color: white;
             cursor: pointer;
@@ -95,65 +99,131 @@
             align-items: center;
             justify-content: center;
             min-width: 50px;
-            backdrop-filter: blur(5px);
+            font-size: 1.15rem;
         }
-        .action-btn svg { width: 22px; height: 22px; }
-        .action-btn.primary { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); }
+        .action-btn.primary { background: #27272a; border-color: rgba(255,255,255,0.25); }
+        .action-btn:active { transform: scale(0.96); }
 
-        #currentLocDisplay {
-            color: var(--text-dim);
-            margin-bottom: 20px;
-            font-size: 1rem;
+        .loc-meta-row {
             width: 100%;
             max-width: 600px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            padding-left: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+            font-size: 0.92rem;
+            padding: 0 4px;
         }
 
         .score-card {
             width: 100%;
             max-width: 600px;
             background: var(--card-bg);
-            border-radius: var(--r-lg);
-            padding: 25px 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 22px 20px;
+            margin-bottom: 15px; 
+            box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+            border: 1px solid var(--border-subtle);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: opacity 0.3s;
         }
-
-        .score-left { text-align: left; max-width: 55%; }
-        .score-right {
-            text-align: right;
+        
+        .score-left { text-align: left; }
+        .score-right { 
+            text-align: right; 
             display: flex;
             flex-direction: column;
             justify-content: center;
-            gap: 12px;
-            align-items: flex-end;
+            gap: 8px;
         }
 
-        .date-label { font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; display:block;}
+        .date-label {
+            font-size: 0.85rem;
+            color: var(--accent-safe);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+            display: block;
+        }
 
-        .stat-temp-row { font-size: 3.5rem; font-weight: 700; line-height: 1; margin-bottom: 4px; display:flex; align-items:center; gap: 8px; }
-        .stat-temp-row .weather-svg { width: 44px; height: 44px; }
+        .stat-temp-row { font-size: 3.4rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
         .stat-feel-row { font-size: 1.05rem; color: var(--text-dim); }
-
-        /* Tabular numerals so updating stats don't jiggle (#3) */
-        .stat-value { font-variant-numeric: tabular-nums; }
+        
         .stat-wind-row, .stat-rain-row {
-            font-size: 1.25rem; font-weight: 600;
-            display: flex; align-items: center; justify-content: flex-end; gap: 7px;
-            font-variant-numeric: tabular-nums;
+            font-size: 1.3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
         }
-        .stat-icon { width: 19px; height: 19px; opacity: 0.85; flex-shrink: 0; }
+        .wind-sub { font-size: 0.8rem; color: var(--text-dim); font-weight: 500; }
+        .wind-arrow { display: inline-block; font-size: 1.3rem; transform-origin: center; transition: transform 0.3s ease; }
 
-        /* Wind compass (#8) */
-        .compass { width: 64px; height: 64px; margin-top: 4px; }
-        .compass .needle-group { transition: transform 1s cubic-bezier(.4,.2,.2,1); transform-origin: 32px 32px; }
+        .commuter-container { width: 100%; max-width: 600px; margin-bottom: 18px; }
+        .commuter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .commuter-label { font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .reset-hour-btn {
+            background: none;
+            border: 1px solid var(--border-subtle);
+            color: var(--accent-safe);
+            border-radius: 6px;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: none;
+        }
+        .commuter-bar {
+            display: flex;
+            height: 28px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border-subtle);
+            touch-action: pan-y;
+        }
+        .hour-block {
+            flex: 1;
+            height: 100%;
+            margin-right: 1px;
+            position: relative;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+        .hour-block:last-child { margin-right: 0; }
+        .hour-block.selected-hour { outline: 2px solid #fff; z-index: 2; }
+        .hour-block.now-hour::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #000;
+            border: 1px solid #fff;
+        }
+
+        .commuter-axis { display: flex; margin-top: 6px; width: 100%; }
+        .axis-tick { flex: 1; text-align: center; font-size: 0.75rem; color: var(--text-dim); position: relative; height: 15px; }
+        .axis-tick::before { content: ''; display: block; width: 1px; height: 4px; background: var(--text-dim); margin: 0 auto 2px auto; visibility: hidden; }
+        .axis-tick.visible::before { visibility: visible; }
+        
+        .alerts-container { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+        .badge { padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .badge.warn { background: rgba(255, 202, 0, 0.15); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
+        .badge.risk { background: rgba(255, 94, 94, 0.15); color: var(--accent-risk); border: 1px solid var(--accent-risk); }
+        .badge.cold { background: rgba(0, 213, 255, 0.15); color: var(--accent-cold); border: 1px solid var(--accent-cold); }
+        .badge.safe { background: rgba(0, 255, 157, 0.12); color: var(--accent-safe); border: 1px solid var(--accent-safe); }
 
         .action-container {
             width: 100%;
@@ -161,281 +231,145 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .full-btn {
             width: 100%;
-            padding: 13px 14px;
-            border-radius: var(--r-md);
-            font-weight: bold;
-            font-size: 0.95rem;
+            padding: 15px;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.92rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             border: none;
-            transition: transform 0.15s ease;
-            text-align: center;
-            font-family: inherit;
+            transition: transform 0.15s;
+            text-decoration: none;
         }
-        .full-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-        .full-btn:active { transform: scale(0.97); }
-        .btn-fuel { background: #1a1a1a; color: var(--accent-warn); border: 1px solid var(--accent-warn); }
-        .btn-sub-fuel { background: rgba(0,0,0,0.6); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); font-size: 0.85rem; }
-        .btn-med { background: #1a1a1a; color: var(--accent-risk); border: 1px solid var(--accent-risk); }
-        .btn-sos { background: #1a1a1a; color: var(--accent-cold); border: 1px solid var(--accent-cold); }
-        .btn-install { background: rgba(255,255,255,0.1); color: var(--text-main); border: 1px solid rgba(255,255,255,0.2); display: none; }
-        .full-btn.searching { opacity: 0.6; pointer-events: none; }
-        .full-btn.result { background: #fff !important; color: #000 !important; }
-
-        .btn-toggle { background: rgba(255,255,255,0.05); color: var(--text-main); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 15px; }
-
-        .commuter-container { width: 100%; max-width: 600px; margin-bottom: 25px; position: relative; }
-        .commuter-label { font-size: 0.9rem; color:#ccc; margin-bottom:8px; text-transform: uppercase; letter-spacing: 1px; text-shadow: 0 1px 2px black;}
-        .commuter-bar { display: flex; height: 24px; border-radius: var(--r-sm); overflow: visible; background: var(--commuter-bg); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(5px); }
-        .hour-block { flex: 1; height: 100%; margin-right: 1px; position: relative; cursor: pointer; transition: filter 0.15s; }
-        .hour-block:last-child { margin-right: 0; }
-        .hour-block:hover, .hour-block.selected { filter: brightness(1.35); }
-        .hour-block.past { opacity: 0.25; }
-        .hour-block.current::after {
-            content: '';
-            position: absolute; inset: -3px;
-            border: 2px solid #fff;
-            border-radius: 4px;
-            animation: pulse 2s ease-in-out infinite;
-            pointer-events: none;
-        }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.5); opacity: 1; }
-            50% { box-shadow: 0 0 10px 2px rgba(255,255,255,0.35); opacity: 0.75; }
-        }
-
-        /* Hour detail popover (#5) */
-        .hour-popover {
-            position: absolute;
-            bottom: calc(100% + 34px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(18,18,18,0.96);
-            border: 1px solid rgba(255,255,255,0.18);
-            border-radius: var(--r-md);
-            padding: 12px 16px;
-            min-width: 190px;
-            z-index: 30;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            backdrop-filter: blur(10px);
-            font-size: 0.92rem;
-            animation: popIn 0.18s ease-out;
-        }
-        .hour-popover::after {
-            content: '';
-            position: absolute;
-            top: 100%; left: 50%;
-            transform: translateX(-50%);
-            border: 7px solid transparent;
-            border-top-color: rgba(255,255,255,0.18);
-        }
-        @keyframes popIn {
-            from { opacity: 0; transform: translateX(-50%) translateY(6px); }
-            to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        .hp-title { font-weight: bold; margin-bottom: 6px; color: #fff; }
-        .hp-row { display: flex; justify-content: space-between; gap: 16px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-        .hp-row b { color: var(--text-main); font-weight: 600; }
-
-        .commuter-axis { display: flex; margin-top: 6px; width: 100%; }
-        .axis-tick { flex: 1; text-align: center; font-size: 0.78rem; color: #ccc; position: relative; height: 15px; text-shadow: 0 1px 2px black; font-variant-numeric: tabular-nums; }
-        .axis-tick::before { content: ''; display: block; width: 1px; height: 4px; background: #ccc; margin: 0 auto 2px auto; visibility: hidden; }
-        .axis-tick.visible::before { visibility: visible; }
-
-        .alerts-container { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; min-height: 20px; }
-        .badge {
-            padding: 8px 14px;
-            border-radius: var(--r-sm);
-            font-size: 0.95rem;
-            font-weight: bold;
-            display: flex; align-items: center; gap: 8px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            /* Cascade entry (#9) */
-            animation: badgeIn 0.35s cubic-bezier(.2,.8,.3,1.1) backwards;
-        }
-        @keyframes badgeIn {
-            from { opacity: 0; transform: translateY(-8px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .badge.warn { background: rgba(255, 202, 0, 0.2); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
-        .badge.risk { background: rgba(255, 94, 94, 0.2); color: var(--accent-risk); border: 1px solid var(--accent-risk); }
-        .badge.cold { background: rgba(0, 213, 255, 0.2); color: var(--accent-cold); border: 1px solid var(--accent-cold); }
-        .badge.safe { background: rgba(0, 255, 157, 0.15); color: var(--accent-safe); border: 1px solid var(--accent-safe); }
-        .badge svg { width: 17px; height: 17px; }
-
-        /* Empty state: animated road (#12) */
-        .empty-state {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
+        .full-btn:active { transform: scale(0.98); }
+        .btn-fuel { background: var(--card-bg); color: var(--accent-warn); border: 1px solid var(--accent-warn); }
+        .btn-sub-fuel { background: #141417; color: var(--text-main); border: 1px solid var(--border-subtle); font-size: 0.85rem; padding: 12px; }
+        .btn-med { background: var(--card-bg); color: var(--accent-risk); border: 1px solid var(--accent-risk); }
+        
+        .sos-row { display: flex; gap: 8px; width: 100%; }
+        .btn-sos { flex: 1; background: var(--card-bg); color: var(--accent-cold); border: 1px solid var(--accent-cold); }
+        .btn-112 { width: 95px; background: var(--accent-risk); color: #000; font-weight: 900; border: 1px solid var(--accent-risk); }
+        
+        .coords-box {
+            display: none;
+            background: #141417;
+            border: 1px dashed var(--accent-cold);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
-            color: var(--text-dim);
-            font-size: 0.9rem;
-            padding: 6px 0;
         }
-        .empty-road {
-            width: 220px; height: 26px;
-            overflow: hidden;
-            border-radius: var(--r-sm);
-            background: rgba(0,0,0,0.45);
-            border: 1px solid rgba(255,255,255,0.08);
-            position: relative;
-        }
-        .empty-road::before {
-            content: '';
-            position: absolute;
-            top: 50%; left: -40%;
-            width: 80%; height: 2px;
-            background: repeating-linear-gradient(90deg, #888 0 18px, transparent 18px 36px);
-            animation: roadDash 1.4s linear infinite;
-        }
-        @keyframes roadDash {
-            from { transform: translateX(0); }
-            to { transform: translateX(36px); }
+        .copy-coords-btn {
+            background: var(--accent-cold);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-weight: 800;
+            font-size: 0.78rem;
+            cursor: pointer;
         }
 
-        .info-chips { width: 100%; max-width: 600px; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
-        .chip { padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; background: rgba(0,0,0,0.4); color: var(--text-dim); border: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
-        .chip.stale { color: var(--accent-warn); border-color: var(--accent-warn); }
-        .chip svg { width: 15px; height: 15px; }
+        .btn-install { background: #27272a; color: var(--text-main); border: 1px solid var(--border-subtle); display: none; }
+        .btn-toggle { background: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-subtle); margin-bottom: 12px; }
 
-        .collapsible-wrapper { width: 100%; max-width: 600px; overflow: hidden; max-height: 0; transition: max-height 0.4s ease-in-out; }
-        .collapsible-wrapper.expanded { max-height: 800px; margin-bottom: 25px; }
+        .collapsible-wrapper { width: 100%; max-width: 600px; overflow: hidden; max-height: 0; transition: max-height 0.35s ease-in-out; }
+        .collapsible-wrapper.expanded { max-height: 600px; margin-bottom: 20px; }
         .collapsible-wrapper.fuel-menu { max-height: 0; margin-bottom: 0; }
-        .collapsible-wrapper.fuel-menu.expanded { max-height: 300px; margin-top: -5px; margin-bottom: 15px; }
+        .collapsible-wrapper.fuel-menu.expanded { max-height: 220px; margin-top: -4px; margin-bottom: 6px; }
 
-        .sub-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 8px;}
-
-        .chart-container { width: 100%; background: var(--card-bg); border-radius: var(--r-lg); padding: 15px; height: 320px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-
-        .legend-row { display: flex; justify-content: center; gap: 20px; font-size: 0.88rem; color: #ccc; margin-bottom: 15px; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+        .sub-menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 6px; }
+        
+        .chart-container { width: 100%; background: var(--card-bg); border-radius: 20px; padding: 15px; height: 300px; position: relative; border: 1px solid var(--border-subtle); }
+        
+        .legend-row { display: flex; justify-content: center; gap: 20px; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 10px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 
         .forecast-list { width: 100%; max-width: 600px; }
-        .forecast-item { background: var(--card-bg); margin-bottom: 12px; padding: 18px; border-radius: var(--r-lg); display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; backdrop-filter: blur(5px); }
-        .forecast-item:hover { background: var(--card-hover); }
-        .forecast-item.active { border: 1px solid #fff; background: var(--card-hover); }
+        .forecast-item { background: var(--card-bg); margin-bottom: 10px; padding: 16px 18px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid var(--border-subtle); }
+        .forecast-item.active { border-color: var(--accent-safe); background: var(--card-hover); }
+        
+        .f-day { font-weight: 700; font-size: 1.1rem; }
+        .f-detail { color: var(--text-dim); font-size: 1rem; display: flex; align-items: center; gap: 12px; }
+        
+        .footer-section { width: 100%; max-width: 600px; margin-top: 15px; padding: 25px 15px 60px 15px; text-align: center; border-top: 1px solid var(--border-subtle); }
+        .footer-section p { color: var(--text-main); font-size: 0.9rem; margin-bottom: 12px; }
+        .donate-btn { display: inline-block; background: #ffdd00; color: #000000; padding: 10px 24px; border-radius: 8px; font-weight: 900; text-decoration: none; letter-spacing: 1px; }
+        .privacy-disclaimer { margin-top: 25px; font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; background: #141417; padding: 14px; border-radius: 12px; border: 1px solid var(--border-subtle); }
 
-        .f-day { font-weight: bold; font-size: 1.2rem; }
-        .f-detail { color: var(--text-dim); font-size: 1.05rem; display: flex; align-items: center; gap: 15px; font-variant-numeric: tabular-nums; }
-
-        .footer-section {
-            width: 100%;
-            max-width: 600px;
-            margin-top: 20px;
-            /* Safe-area inset (#10): keeps donate button clear of iPhone home indicator */
-            padding: 30px 20px calc(80px + env(safe-area-inset-bottom)) 20px;
-            text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .footer-section p { color: var(--text-main); font-size: 0.95rem; margin-bottom: 15px; }
-        .donate-btn { display: inline-block; background: #ffdd00; color: #000000; padding: 10px 25px; border-radius: var(--r-sm); font-weight: 900; text-decoration: none; letter-spacing: 1px; transition: transform 0.2s; }
-        .donate-btn:active { transform: scale(0.95); }
-        .privacy-disclaimer { margin-top: 35px; font-size: 0.85rem; color: #dddddd; line-height: 1.5; background: rgba(0, 0, 0, 0.4); padding: 15px; border-radius: var(--r-md); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .attribution { margin-top: 20px; font-size: 0.8rem; color: #999; }
-        .attribution a { color: #999; }
-
-        .loader { display: none; border: 4px solid #333; border-top: 4px solid var(--accent-safe); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        .loader { display: none; border: 3px solid #27272a; border-top: 3px solid var(--accent-safe); border-radius: 50%; width: 32px; height: 32px; animation: spin 0.8s linear infinite; margin: 12px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        /* Skeleton loading state (#7) */
-        .skeleton { display: none; width: 100%; max-width: 600px; }
-        .skeleton.on { display: block; }
-        .sk-card {
-            background: linear-gradient(100deg,
-                rgba(255,255,255,0.06) 30%,
-                rgba(255,255,255,0.14) 50%,
-                rgba(255,255,255,0.06) 70%);
-            background-size: 200% 100%;
-            animation: shimmer 1.4s infinite linear;
-            border-radius: var(--r-lg);
-            margin-bottom: 15px;
-        }
-        .sk-score { height: 120px; }
-        .sk-bar { height: 24px; border-radius: var(--r-sm); margin-top: 25px; }
-        @keyframes shimmer {
-            from { background-position: 200% 0; }
-            to { background-position: -200% 0; }
-        }
-
-        /* Animated weather SVGs (#1) */
-        .wx-sun-rays { animation: wxSpin 14s linear infinite; transform-origin: 32px 32px; }
-        .wx-cloud { animation: wxDrift 5s ease-in-out infinite alternate; }
-        .wx-drop { animation: wxFall 1.4s linear infinite; }
-        .wx-drop:nth-of-type(2) { animation-delay: 0.45s; }
-        .wx-drop:nth-of-type(3) { animation-delay: 0.9s; }
-        .wx-flake { animation: wxSpin 8s linear infinite; transform-origin: center; }
-        .wx-bolt { animation: wxFlash 2.2s ease-in-out infinite; }
-        .wx-fog-line { animation: wxFog 3s ease-in-out infinite alternate; }
-        @keyframes wxSpin { to { transform: rotate(360deg); } }
-        @keyframes wxDrift { from { transform: translateX(-1.5px);} to { transform: translateX(1.5px);} }
-        @keyframes wxFall {
-            0% { transform: translateY(0); opacity: 0; }
-            25% { opacity: 1; }
-            100% { transform: translateY(14px); opacity: 0; }
-        }
-        @keyframes wxFlash { 0%, 60%, 100% { opacity: 1;} 65%, 72% { opacity: 0.15;} }
-        @keyframes wxFog { from { transform: translateX(-2px);} to { transform: translateX(2px);} }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1>VISOR</h1>
+        <div class="ride-status-pill" id="rideStatusPill">--</div>
     </div>
 
     <div class="location-bar">
-        <button class="action-btn" id="gpsBtn" onclick="getLocation(false)" aria-label="Use my location"></button>
-        <input type="text" id="locInput" placeholder="Αναζήτηση...">
-        <button class="action-btn primary" id="searchBtn" onclick="searchLocation()" aria-label="Search"></button>
+        <button class="action-btn" id="gpsBtn" onclick="enableGpsMode()" title="GPS">📍</button>
+        <input type="text" id="locInput" placeholder="Αναζήτηση Πόλης..." enterkeyhint="search">
+        <button class="action-btn primary" id="searchBtn" onclick="searchLocation()">🔍</button>
         <button class="action-btn" onclick="toggleLang()" id="langBtn">EL</button>
     </div>
-    <div id="currentLocDisplay"></div>
 
-    <!-- Skeleton loading (#7) -->
-    <div class="skeleton" id="skeleton">
-        <div class="sk-card sk-score"></div>
-        <div class="sk-card sk-bar"></div>
+    <div class="loc-meta-row">
+        <span id="currentLocDisplay">📍 --</span>
+        <span id="sunTimesDisplay">🌅 --:--  🌇 --:--</span>
     </div>
 
     <div class="loader" id="loader"></div>
 
     <div class="score-card" id="scoreCard">
         <div class="score-left">
-            <span class="date-label" id="dateLabel">TODAY</span>
+            <span class="date-label" id="dateLabel">ΣΗΜΕΡΑ</span>
             <div class="stat-temp-row">
-                <span class="stat-value" id="tempStat">--</span><span style="font-size:1.5rem; vertical-align: super;">°</span>
-                <span id="weatherIcon" role="img"></span>
+                <span id="tempStat">--</span><span style="font-size:1.5rem; vertical-align: super;">°C</span>
             </div>
             <div class="stat-feel-row">
-                <span id="feelLabel">Feels</span> <span class="stat-value" id="feelStat">--°</span>
+                <span id="feelLabel">Αίσθηση</span> <span id="feelStat">--°</span>
             </div>
         </div>
         <div class="score-right">
             <div class="stat-rain-row">
-                <svg class="stat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 16.6A5 5 0 0 0 18 7a7 7 0 0 0-13.3 2A4.5 4.5 0 0 0 6 17.9"/><path d="M8 19v2M12 18.5v2M16 19v2"/></svg>
-                <span class="stat-value" id="rainStat">--%</span>
+                <span id="rainStat">--%</span> 🌧️
             </div>
-            <div class="stat-wind-row" id="windRow">
-                <span class="stat-value" id="windStat">-- km/h</span>
-                <span id="windCompass" aria-label="Wind direction"></span>
+            <div class="stat-wind-row">
+                <span id="windStat">--</span> 
+                <span class="wind-arrow" id="windArrow">⬇</span> 💨
             </div>
+            <div class="wind-sub" id="windSubLabel">Ριπές</div>
         </div>
     </div>
 
+    <div class="commuter-container">
+        <div class="commuter-header">
+            <div class="commuter-label" id="commuterTitle">24ΩΡΟ ΧΡΟΝΟΛΟΓΙΟ (ΠΑΤΗΣΤΕ ΩΡΑ)</div>
+            <button class="reset-hour-btn" id="resetHourBtn" onclick="resetHourSelection()">LIVE ↺</button>
+        </div>
+        <div class="commuter-bar" id="commuterBar"></div>
+        <div class="commuter-axis" id="commuterAxis"></div>
+    </div>
+
+    <div class="alerts-container" id="alertsContainer"></div>
+
     <div class="action-container">
-        <button class="full-btn btn-fuel" onclick="toggleFuelMenu()" id="fuelBtn"></button>
+        <button class="full-btn btn-fuel" onclick="toggleFuelMenu()" id="fuelBtn">
+            ⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ
+        </button>
         <div class="collapsible-wrapper fuel-menu" id="fuelMenuWrapper">
             <div class="sub-menu-grid">
                 <button class="full-btn btn-sub-fuel" onclick="findSpecificFuel('petrol')" id="btnPetrol">ΒΕΝΖΙΝΗ</button>
@@ -445,36 +379,45 @@
             </div>
         </div>
 
-        <button class="full-btn btn-med" onclick="findMedical()" id="medBtn"></button>
-        <button class="full-btn btn-sos" onclick="findSOS()" id="sosBtn"></button>
-        <button class="full-btn btn-install" id="installBtn"></button>
+        <button class="full-btn btn-med" onclick="findMedical()" id="medBtn">
+            🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ
+        </button>
+
+        <div class="sos-row">
+            <button class="full-btn btn-sos" onclick="findSOS()" id="sosBtn">
+                🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ)
+            </button>
+            <a href="tel:112" class="full-btn btn-112">📞 112</a>
+        </div>
+
+        <div class="coords-box" id="coordsBox">
+            <span id="coordsText">Lat: --, Lon: --</span>
+            <button class="copy-coords-btn" onclick="copyCoords()" id="copyCoordsBtn">ΑΝΤΙΓΡΑΦΗ</button>
+        </div>
+
+        <button class="full-btn btn-install" id="installBtn">
+            📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ
+        </button>
     </div>
 
-    <div class="commuter-container">
-        <div class="commuter-label" id="commuterTitle">24H Timeline</div>
-        <div class="commuter-bar" id="commuterBar"></div>
-        <div class="commuter-axis" id="commuterAxis"></div>
-    </div>
-
-    <div class="alerts-container" id="alertsContainer"></div>
-
-    <div class="info-chips" id="infoChips"></div>
-
-    <button class="full-btn btn-toggle" id="chartToggleBtn" onclick="toggleChart()"></button>
+    <button class="full-btn btn-toggle" id="chartToggleBtn" onclick="toggleChart()">
+        📊 ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ
+    </button>
 
     <div class="collapsible-wrapper" id="chartWrapper">
         <div class="chart-container">
             <div class="legend-row">
-                <span><span class="dot" style="background:#00ff9d"></span><span id="legTemp">Temp</span></span>
-                <span><span class="dot" style="background:#00d5ff"></span><span id="legRain">Rain %</span></span>
-                <span><span class="dot" style="background:rgba(20, 20, 60, 0.8)"></span><span id="legNight">Night</span></span>
-                <span><span class="dot" style="background:rgba(0,110,255,0.35)"></span><span id="legWet">Wet</span></span>
+                <span><span class="dot" style="background:#00ff9d"></span><span id="legTemp">Θερμ.</span></span>
+                <span><span class="dot" style="background:#00d5ff"></span><span id="legRain">Βροχή %</span></span>
+                <span><span class="dot" style="background:rgba(30, 45, 90, 0.9)"></span><span id="legNight">Νύχτα</span></span>
             </div>
             <canvas id="weatherChart"></canvas>
         </div>
     </div>
 
-    <button class="full-btn btn-toggle" id="forecastToggleBtn" onclick="toggleForecast()"></button>
+    <button class="full-btn btn-toggle" id="forecastToggleBtn" onclick="toggleForecast()">
+        📅 ΠΡΟΒΟΛΗ ΠΡΟΒΛΕΨΗΣ (4 ΗΜΕΡΕΣ)
+    </button>
 
     <div class="collapsible-wrapper" id="forecastWrapper">
         <div class="forecast-list" id="forecastList"></div>
@@ -484,331 +427,159 @@
         <p id="donateText">Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις</p>
         <a href="https://buymeacoffee.com/ursoalbo" target="_blank" rel="noopener" class="donate-btn" id="donateBtn">ΕΔΩ</a>
         <div class="privacy-disclaimer" id="privacyText">
-            Απόρρητο: Το VISOR δεν αποθηκεύει δεδομένα σε εξωτερικούς διακομιστές. Όλες οι τοποθεσίες και οι προτιμήσεις παραμένουν αυστηρά τοπικά στη συσκευή σας και κανείς δεν έχει πρόσβαση σε αυτά.
-        </div>
-        <div class="attribution">
-            <a href="https://open-meteo.com/" target="_blank" rel="noopener">Weather by Open-Meteo</a> ·
-            <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">POI data © OpenStreetMap contributors</a>
+            Απόρρητο Δεδομένων: Η εφαρμογή δεν αποθηκεύει δεδομένα σε κανέναν εξωτερικό διακομιστή. Όλα τα στοιχεία του χρήστη μένουν τοπικά στη συσκευή και κανείς δεν έχει πρόσβαση σε αυτά.
         </div>
     </div>
 
     <script>
-        'use strict';
-
-        let currentLang = 'el';
-        let currentLat = 37.9838;
+        let currentLang = 'el'; 
+        let currentLat = 37.9838; 
         let currentLon = 23.7275;
+        let isManualSearch = false;
         let chartInstance = null;
-        let weatherDataCache = null;
-        let selectedDayIndex = 0;
-        let rawApiData = null;
+        let weatherDataCache = null; 
+        let selectedDayIndex = 0; 
+        let selectedHourIndex = null;
+        let currentCityName = "Athens, GR";
+        let rawApiData = null; 
         let deferredPrompt = null;
         let isChartVisible = false;
         let isForecastVisible = false;
         let isFuelMenuVisible = false;
-        let openPopover = null;
 
-        // Hours a road stays wet after rain stops ("wet road persistence")
-        const WET_ROAD_PERSISTENCE_HOURS = 2;
-        // Only refetch weather if GPS moved more than this (km)
-        const GPS_REFETCH_THRESHOLD_KM = 1;
-        // How often we re-check GPS (ms). Weather itself is only refetched on movement or manually.
-        const GPS_POLL_INTERVAL_MS = 5 * 60 * 1000;
+        const OVERPASS_SERVERS = [
+            "https://overpass-api.de/api/interpreter",
+            "https://lz4.overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter"
+        ];
 
         const STRINGS = {
             en: {
                 placeholder: "Search City...",
                 warnCold: "Chilly (<10°C)",
-                warnFreeze: "Ice Possible",
-                warnWind: "High Wind",
-                warnFog: "Foggy",
+                warnFreeze: "Ice Risk (<2°C)",
+                warnWind: "High Gusts (>50 km/h)",
+                warnFog: "Low Visibility",
+                warnVisorFog: "Visor Fogging Risk",
                 warnRain: "Rain Expected",
-                warnStorm: "Intense Weather",
-                warnWet: "Wet Roads",
+                warnStorm: "Severe Weather",
+                warnWet: "Wet Asphalt",
                 days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
                 today: "TODAY",
-                commuterTitle: "Timeline",
+                commuterTitle: "24H Timeline (Tap Hour)",
                 feels: "Feels",
-                safe: "Clear Conditions",
+                gusts: "Max Gusts",
+                safe: "Optimal Riding Conditions",
+                rideGo: "RIDE SAFE",
+                rideCaution: "CAUTION",
+                rideHazard: "HAZARD",
                 legTemp: "Temp",
                 legRain: "Rain %",
                 legNight: "Night",
-                legWet: "Wet",
-                fuelBtn: "NEAREST GAS STATION",
+                fuelBtn: "⛽ NEAREST GAS STATION",
                 fuelPetrol: "PETROL",
                 fuelDiesel: "DIESEL",
                 fuelLpg: "LPG",
                 fuelCng: "CNG",
-                medBtn: "MEDICAL / URGENT CARE",
-                sosBtn: "ROADSIDE ASSIST (MOTORWAY / 112)",
-                installBtn: "INSTALL APP",
-                chartShow: "SHOW GRAPH",
-                chartHide: "HIDE GRAPH",
-                forecastShow: "SHOW FORECAST",
-                forecastHide: "HIDE FORECAST",
+                medBtn: "🏥 MEDICAL / URGENT CARE",
+                sosBtn: "🆘 MOTORWAY ASSIST",
+                copyBtn: "COPY GPS",
+                copiedBtn: "COPIED!",
+                installBtn: "📱 INSTALL APP",
+                chartShow: "📊 SHOW GRAPH",
+                chartHide: "📊 HIDE GRAPH",
+                forecastShow: "📅 SHOW 4-DAY FORECAST",
+                forecastHide: "📅 HIDE FORECAST",
                 searchStr: "SEARCHING...",
                 noneStr: "NONE WITHIN 15KM",
-                errStr: "API ERROR",
-                errWeatherStr: "WEATHER ERROR — TAP TO RETRY",
-                gpsDenied: "Location permission denied",
-                notFound: "Location not found",
+                errStr: "NETWORK ERROR",
                 gasStation: "Gas Station",
                 medicalCenter: "Medical Facility",
-                rainStart: "Rain starting",
-                around: "around",
-                sunsetIn: "Sunset in",
-                sunriseIn: "Sunrise in",
-                dataFrom: "Data from",
-                hoursAgo: "h ago — may be outdated",
-                emptyStateStr: "Finding your position…",
-                hpHour: "Hour",
-                hpFeel: "Feels",
-                hpGust: "Gust",
-                hpRainP: "Rain",
-                hpWet: "Wet road",
-                hpYes: "YES",
-                hpNo: "no",
                 donateText: "If you found VISOR useful, you can support it",
                 donateBtn: "HERE",
-                privacyText: "Privacy Policy: VISOR does not store data on external servers. All user locations and preferences remain strictly local on your device and are completely inaccessible to third parties."
+                privacyText: "Privacy Policy: VISOR does not store data on external servers. All user locations and preferences remain strictly local on your device."
             },
             el: {
                 placeholder: "Αναζήτηση Πόλης...",
                 warnCold: "Κρύο (<10°C)",
-                warnFreeze: "Πιθανός Πάγος",
-                warnWind: "Ισχυρός Άνεμος",
-                warnFog: "Ομίχλη",
+                warnFreeze: "Κίνδυνος Πάγου (<2°C)",
+                warnWind: "Ισχυρές Ριπές (>50 km/h)",
+                warnFog: "Χαμηλή Ορατότητα",
+                warnVisorFog: "Θάμπωμα Ζελατίνας",
                 warnRain: "Πιθανή Βροχή",
-                warnStorm: "Έντονα Φαινόμενα",
-                warnWet: "Υγρό Οδόστρωμα",
+                warnStorm: "Έντονα Φαινόμενα", 
+                warnWet: "Υγρό Οδόστρωμα", 
                 days: ['Κυρ', 'Δευ', 'Τρι', 'Τετ', 'Πεμ', 'Παρ', 'Σαβ'],
                 today: "ΣΗΜΕΡΑ",
-                commuterTitle: "Χρονολογιο",
+                commuterTitle: "24Ωρο Χρονολογιο (Πατηστε Ωρα)",
                 feels: "Αίσθηση",
-                safe: "Καλές Συνθήκες",
+                gusts: "Μέγ. Ριπές",
+                safe: "Ιδανικές Συνθήκες",
+                rideGo: "ΚΑΛΗ ΒΟΛΤΑ",
+                rideCaution: "ΠΡΟΣΟΧΗ",
+                rideHazard: "ΚΙΝΔΥΝΟΣ",
                 legTemp: "Θερμ.",
                 legRain: "Βροχή %",
                 legNight: "Νύχτα",
-                legWet: "Υγρό",
-                fuelBtn: "ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ",
+                fuelBtn: "⛽ ΚΟΝΤΙΝΟΤΕΡΟ ΠΡΑΤΗΡΙΟ ΚΑΥΣΙΜΩΝ",
                 fuelPetrol: "ΒΕΝΖΙΝΗ",
                 fuelDiesel: "ΠΕΤΡΕΛΑΙΟ",
                 fuelLpg: "LPG",
                 fuelCng: "CNG",
-                medBtn: "ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
-                sosBtn: "ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ / 112)",
-                installBtn: "ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ",
-                chartShow: "ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ",
-                chartHide: "ΑΠΟΚΡΥΨΗ ΓΡΑΦΗΜΑΤΟΣ",
-                forecastShow: "ΠΡΟΒΟΛΗ ΠΡΟΒΛΕΨΗΣ",
-                forecastHide: "ΑΠΟΚΡΥΨΗ ΠΡΟΒΛΕΨΗΣ",
+                medBtn: "🏥 ΝΟΣΟΚΟΜΕΙΟ / ΚΕΝΤΡΟ ΥΓΕΙΑΣ",
+                sosBtn: "🆘 ΟΔΙΚΗ ΒΟΗΘΕΙΑ (ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΣ)",
+                copyBtn: "ΑΝΤΙΓΡΑΦΗ GPS",
+                copiedBtn: "ΑΝΤΙΓΡΑΦΗΚΕ!",
+                installBtn: "📱 ΕΓΚΑΤΑΣΤΑΣΗ ΩΣ ΕΦΑΡΜΟΓΗ",
+                chartShow: "📊 ΠΡΟΒΟΛΗ ΓΡΑΦΗΜΑΤΟΣ",
+                chartHide: "📊 ΑΠΟΚΡΥΨΗ ΓΡΑΦΗΜΑΤΟΣ",
+                forecastShow: "📅 ΠΡΟΒΟΛΗ ΠΡΟΒΛΕΨΗΣ (4 ΗΜΕΡΕΣ)",
+                forecastHide: "📅 ΑΠΟΚΡΥΨΗ ΠΡΟΒΛΕΨΗΣ",
                 searchStr: "ΑΝΑΖΗΤΗΣΗ...",
                 noneStr: "ΚΑΝΕΝΑ ΣΤΑ 15km",
                 errStr: "ΣΦΑΛΜΑ ΔΙΚΤΥΟΥ",
-                errWeatherStr: "ΣΦΑΛΜΑ ΚΑΙΡΟΥ — ΠΑΤΑ ΓΙΑ ΕΠΑΝΑΛΗΨΗ",
-                gpsDenied: "Άρνηση πρόσβασης στην τοποθεσία",
-                notFound: "Δεν βρέθηκε η τοποθεσία",
-                gasStation: "Βενζινάδικο",
+                gasStation: "Πρατήριο",
                 medicalCenter: "Ιατρικό Κέντρο",
-                rainStart: "Έναρξη βροχής",
-                around: "περίπου",
-                sunsetIn: "Δύση σε",
-                sunriseIn: "Ανατολή σε",
-                dataFrom: "Δεδομένα από",
-                hoursAgo: "ώρες πριν — ίσως παρωχημένα",
-                emptyStateStr: "Εντοπισμός θέσης…",
-                hpHour: "Ώρα",
-                hpFeel: "Αίσθηση",
-                hpGust: "Ριπή",
-                hpRainP: "Βροχή",
-                hpWet: "Υγρό δρόμο",
-                hpYes: "ΝΑΙ",
-                hpNo: "όχι",
                 donateText: "Αν το VISOR σου φάνηκε χρήσιμο, μπορείς να το στηρίξεις",
                 donateBtn: "ΕΔΩ",
-                privacyText: "Απόρρητο Δεδομένων: Η εφαρμογή δεν αποθηκεύει δεδομένα σε κανέναν εξωτερικό διακομιστή. Όλα τα στοιχεία του χρήστη μένουν τοπικά στη συσκευή και κανείς δεν έχει πρόσβαση σε αυτά."
+                privacyText: "Απόρρητο Δεδομένων: Η εφαρμογή δεν αποθηκεύει δεδομένα σε κανέναν εξωτερικό διακομιστή. Όλα τα στοιχεία του χρήστη μένουν τοπικά στη συσκευή."
             }
         };
-
-        // Greek motorway operators as data instead of hardcoded if/else chains.
-        const MOTORWAY_OPERATORS = [
-            { matchName: "αττική", matchRef: "A6", phone: "1077", opName: { el: "Αττική Οδός", en: "Attiki Odos" } },
-            { matchName: "εγνατία", matchRef: "A2", phone: "1077", opName: { el: "Εγνατία Οδός", en: "Egnatia Odos" } },
-            { matchName: "ολυμπία", matchRef: "A8", phone: "1024", opName: { el: "Ολυμπία Οδός", en: "Olympia Odos" } },
-            { matchName: "μορέας", matchRef: "A7", phone: "1025", opName: { el: "Μορέας (Α7)", en: "Moreas (A7)" } },
-            { matchName: "ιόνια", matchRef: "A5", phone: "1075", opName: { el: "Ιόνια Οδός", en: "Ionia Odos" } },
-            { matchRef: "A3", phone: "1075", opName: { el: "Κεντρική Οδός (E65)", en: "Central Road (E65)" } },
-            { matchRef: "A1", latSegments: [
-                { maxLat: 38.8, phone: "1075", opName: { el: "Νέα Οδός (Α1)", en: "Nea Odos (A1)" } },
-                { maxLat: 40.5, phone: "1144", opName: { el: "Αυτοκινητόδρομος Αιγαίου", en: "Aegean Motorway" } },
-                { maxLat: Infinity, phone: "1077", opName: { el: "Εγνατία Οδός / Α1", en: "Egnatia Odos / A1" } }
-            ]}
-        ];
-
-        // ---- Inline SVG icon set (#1): stroke style, consistent 24x24 grid ----
-        const svgEl = (paths, vb = '0 0 24 24') =>
-            `<svg viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
-        const ICONS = {
-            pin: svgEl('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>'),
-            search: svgEl('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>'),
-            fuel: svgEl('<line x1="3" y1="22" x2="15" y2="22"/><line x1="4" y1="9" x2="14" y2="9"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V9.8a2 2 0 0 0-.6-1.4L18 5"/>'),
-            med: svgEl('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'),
-            sos: svgEl('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7A2 2 0 0 1 22 16.9Z"/>'),
-            install: svgEl('<rect x="5" y="2" width="14" height="20" rx="3"/><path d="M12 7v8m0 0 3-3m-3 3-3-3"/>'),
-            chart: svgEl('<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M7 15l4-5 3 3 5-7"/>'),
-            calendar: svgEl('<rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'),
-            sun: svgEl('<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4m11.4-11.4 1.4-1.4"/>'),
-            clock: svgEl('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'),
-            droplet: svgEl('<path d="M12 2.7S6 9.3 6 13.5a6 6 0 0 0 12 0C18 9.3 12 2.7 12 2.7Z"/>'),
-            wind: svgEl('<path d="M9.6 4.6A2 2 0 1 1 11 8H2m10.6 11.4A2 2 0 1 0 14 16H2m15.7-8.7A2.5 2.5 0 1 1 19.5 12H2"/>')
-        };
-
-        // Animated weather SVG generator (#1) — self-contained, no CDN
-        const WMO_GROUPS = {
-            clear: new Set([0]), partly: new Set([1, 2]),
-            cloudy: new Set([3]), fog: new Set([45, 48]),
-            drizzle: new Set([51, 53, 55, 56, 57]),
-            rain: new Set([61, 63, 65, 66, 67, 80, 81, 82]),
-            snow: new Set([71, 73, 75, 77, 85, 86]),
-            storm: new Set([95, 96, 99])
-        };
-        function wmoGroup(code) {
-            for (const [g, set] of Object.entries(WMO_GROUPS)) if (set.has(code)) return g;
-            return 'cloudy';
-        }
-        function weatherSvg(code) {
-            const g = wmoGroup(code);
-            const C = '#ffd75e';
-            const ray = `<g class="wx-sun-rays" stroke="${C}" stroke-width="2.6" stroke-linecap="round">
-                <line x1="32" y1="6" x2="32" y2="12"/><line x1="32" y1="52" x2="32" y2="58"/>
-                <line x1="6" y1="32" x2="12" y2="32"/><line x1="52" y1="32" x2="58" y2="32"/>
-                <line x1="13.6" y1="13.6" x2="17.8" y2="17.8"/><line x1="46.2" y1="46.2" x2="50.4" y2="50.4"/>
-                <line x1="13.6" y1="50.4" x2="17.8" y2="46.2"/><line x1="46.2" y1="17.8" x2="50.4" y2="13.6"/></g>`;
-            const cloudPath = 'M20 42h22a8 8 0 0 0 1.2-15.9A12 12 0 0 0 20 23.5 9.5 9.5 0 0 0 20 42Z';
-            const cloudFill = '#cfd8e3';
-            const cloud = `<g class="wx-cloud"><path d="${cloudPath}" fill="${cloudFill}"/></g>`;
-            const sunSmall = (cx, cy) => `<circle cx="${cx}" cy="${cy}" r="8" fill="${C}"/>
-                <g class="wx-sun-rays" style="transform-origin:${cx}px ${cy}px" stroke="${C}" stroke-width="2" stroke-linecap="round">
-                <line x1="${cx}" y1="${cy-13}" x2="${cx}" y2="${cy-9}"/><line x1="${cx}" y1="${cy+13}" x2="${cx}" y2="${cy+9}"/>
-                <line x1="${cx-13}" y1="${cy}" x2="${cx-9}" y2="${cy}"/><line x1="${cx+13}" y1="${cy}" x2="${cx+9}" y2="${cy}"/></g>`;
-
-            let body = '';
-            if (g === 'clear') body = `<circle cx="32" cy="32" r="12" fill="${C}"/>${ray}`;
-            else if (g === 'partly') body = `${sunSmall(42, 18)}<g class="wx-cloud"><path d="M14 46h20a7.5 7.5 0 0 0 1.1-14.9A11 11 0 0 0 14 28.6 8.8 8.8 0 0 0 14 46Z" fill="${cloudFill}"/></g>`;
-            else if (g === 'cloudy') body = `<g class="wx-cloud"><path d="${cloudPath}" fill="${cloudFill}"/></g>`;
-            else if (g === 'fog') body = `<g class="wx-fog-line"><line x1="12" y1="30" x2="52" y2="30" stroke="${cloudFill}" stroke-width="4" stroke-linecap="round"/></g>
-                <g class="wx-fog-line" style="animation-delay:-1.5s"><line x1="16" y1="40" x2="48" y2="40" stroke="#aab6c5" stroke-width="4" stroke-linecap="round"/></g>`;
-            else if (g === 'drizzle' || g === 'rain') {
-                const n = g === 'rain' ? 3 : 2;
-                const drops = Array.from({length: n}, (_, i) =>
-                    `<line class="wx-drop" x1="${24 + i*9}" y1="46" x2="${24 + i*9}" y2="54" stroke="#5ec8ff" stroke-width="3" stroke-linecap="round"/>`).join('');
-                body = cloud + drops;
-            }
-            else if (g === 'snow') body = cloud + `<g class="wx-flake" stroke="#bfeaff" stroke-width="2" stroke-linecap="round">
-                <line x1="26" y1="50" x2="38" y2="62" transform="translate(0,-6)"/><line x1="38" y1="50" x2="26" y2="62" transform="translate(0,-6)"/>
-                <line x1="32" y1="47" x2="32" y2="59" transform="translate(0,-6)"/></g>`;
-            else if (g === 'storm') body = cloud + `<polygon class="wx-bolt" points="30,44 38,44 33,53 39,53 27,66 31,55 26,55" fill="${C}"/>`;
-            return `<svg class="weather-svg" viewBox="0 0 64 64" role="img">${body}</svg>`;
-        }
-        function weatherIconFor(code) { return weatherSvg(code); }
-
-        // Format a duration in minutes as e.g. "1h 40m"
-        function formatDuration(totalMins) {
-            const h = Math.floor(totalMins / 60);
-            const m = totalMins % 60;
-            if (h <= 0) return `${m}m`;
-            return `${h}h ${m}m`;
-        }
 
         window.addEventListener('DOMContentLoaded', () => {
-            Chart.defaults.font.size = 13;
-            Chart.defaults.color = '#ccc';
-
-            const savedLang = localStorage.getItem('motoLang');
-            if (savedLang === 'en' || savedLang === 'el') currentLang = savedLang;
-            document.documentElement.lang = currentLang;
-
-            // Inject SVG icons into static buttons (#1)
-            document.getElementById('gpsBtn').innerHTML = ICONS.pin;
-            document.getElementById('searchBtn').innerHTML = ICONS.search;
+            document.getElementById('locInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.target.blur();
+                    searchLocation();
+                }
+            });
 
             const savedLat = localStorage.getItem('motoLat');
             const savedLon = localStorage.getItem('motoLon');
             const savedName = localStorage.getItem('motoName');
-
+            const savedManual = localStorage.getItem('motoManual') === 'true';
+            
             if (savedLat && savedLon) {
                 currentLat = parseFloat(savedLat);
                 currentLon = parseFloat(savedLon);
-                document.getElementById('currentLocDisplay').innerText = `📍 ${savedName || "Saved Location"}`;
-            } else {
-                currentLat = 37.9838;
-                currentLon = 23.7275;
-                document.getElementById('currentLocDisplay').innerText = "📍 Athens, GR";
+                currentCityName = savedName || "Saved Location";
+                isManualSearch = savedManual;
             }
-
+            
+            document.getElementById('currentLocDisplay').innerText = `📍 ${currentCityName}`;
             updateStaticText();
-
-            // Instant render from cached payload before hitting the network.
-            const cachedRaw = localStorage.getItem('motoWeatherCache');
-            const cachedLat = parseFloat(localStorage.getItem('motoWeatherLat'));
-            const cachedLon = parseFloat(localStorage.getItem('motoWeatherLon'));
-            if (cachedRaw && cachedLat === currentLat && cachedLon === currentLon) {
-                try {
-                    applyWeatherData(JSON.parse(cachedRaw), true);
-                } catch (e) { /* corrupted cache — ignore */ }
-            }
-
-            // If nothing rendered yet, show the empty-state road (#12)
-            setTimeout(() => {
-                if (!rawApiData) showEmptyState();
-                showSkeleton();
-            }, 50);
-
             fetchWeather();
-            getLocation(true);
 
-            setInterval(() => getLocation(true), GPS_POLL_INTERVAL_MS);
-
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+            if (!isManualSearch) {
+                getLocation(true);
             }
-
-            // PWA app-shortcut deep links (#10): ?action=fuel | sos
-            const params = new URLSearchParams(window.location.search);
-            const action = params.get('action');
-            if (action === 'fuel') {
-                isFuelMenuVisible = true;
-                document.getElementById('fuelMenuWrapper').classList.add('expanded');
-                document.getElementById('fuelBtn').scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else if (action === 'sos') {
-                findSOS();
-            }
+            
+            setInterval(() => {
+                if (!isManualSearch) getLocation(true);
+            }, 180000);
         });
 
-        function showSkeleton() {
-            document.getElementById('skeleton').classList.add('on');
-        }
-        function hideSkeleton() {
-            document.getElementById('skeleton').classList.remove('on');
-        }
-
-        // Animated dashed road shown until first data lands (#12)
-        function showEmptyState() {
-            const cont = document.getElementById('alertsContainer');
-            cont.innerHTML = '';
-            const wrap = document.createElement('div');
-            wrap.className = 'empty-state';
-            const road = document.createElement('div');
-            road.className = 'empty-road';
-            const label = document.createElement('span');
-            label.textContent = STRINGS[currentLang].emptyStateStr;
-            wrap.appendChild(road);
-            wrap.appendChild(label);
-            cont.appendChild(wrap);
-        }
-
         const installBtnEl = document.getElementById('installBtn');
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
@@ -830,24 +601,26 @@
 
         function toggleLang() {
             currentLang = currentLang === 'en' ? 'el' : 'en';
-            localStorage.setItem('motoLang', currentLang);
-            document.documentElement.lang = currentLang;
             updateStaticText();
-            if (weatherDataCache) renderDashboard(selectedDayIndex);
+            if (weatherDataCache) {
+                renderForecastList();
+                renderDashboard(selectedDayIndex);
+            }
         }
-
+        
         function toggleChart() {
             isChartVisible = !isChartVisible;
             const wrapper = document.getElementById('chartWrapper');
             const btn = document.getElementById('chartToggleBtn');
             const t = STRINGS[currentLang];
-
+            
             if (isChartVisible) {
                 wrapper.classList.add('expanded');
-                setBtnWithIcon(btn, ICONS.chart, t.chartHide);
+                btn.innerText = t.chartHide;
+                if (weatherDataCache) drawChart(weatherDataCache[selectedDayIndex]);
             } else {
                 wrapper.classList.remove('expanded');
-                setBtnWithIcon(btn, ICONS.chart, t.chartShow);
+                btn.innerText = t.chartShow;
             }
         }
 
@@ -856,13 +629,13 @@
             const wrapper = document.getElementById('forecastWrapper');
             const btn = document.getElementById('forecastToggleBtn');
             const t = STRINGS[currentLang];
-
+            
             if (isForecastVisible) {
                 wrapper.classList.add('expanded');
-                setBtnWithIcon(btn, ICONS.calendar, t.forecastHide);
+                btn.innerText = t.forecastHide;
             } else {
                 wrapper.classList.remove('expanded');
-                setBtnWithIcon(btn, ICONS.calendar, t.forecastShow);
+                btn.innerText = t.forecastShow;
             }
         }
 
@@ -871,190 +644,156 @@
             document.getElementById('fuelMenuWrapper').classList.toggle('expanded', isFuelMenuVisible);
         }
 
-        function setBtnWithIcon(btn, icon, label) {
-            // Trusted static markup only (icon paths are hardcoded constants)
-            btn.innerHTML = icon + `<span>${label}</span>`;
-        }
-
         function updateStaticText() {
             const t = STRINGS[currentLang];
-            document.getElementById('langBtn').textContent = currentLang.toUpperCase();
+            document.getElementById('langBtn').innerText = currentLang.toUpperCase();
             document.getElementById('locInput').placeholder = t.placeholder;
-            document.getElementById('gpsBtn').setAttribute('aria-label', 'Use my location');
-            document.getElementById('searchBtn').setAttribute('aria-label', 'Search');
-            document.getElementById('commuterTitle').textContent = t.commuterTitle;
-            document.getElementById('legTemp').textContent = t.legTemp;
-            document.getElementById('legRain').textContent = t.legRain;
-            document.getElementById('legNight').textContent = t.legNight;
-            document.getElementById('legWet').textContent = t.legWet;
-            document.getElementById('feelLabel').textContent = t.feels;
-            document.getElementById('donateText').textContent = t.donateText;
-            document.getElementById('donateBtn').textContent = t.donateBtn;
-            document.getElementById('privacyText').textContent = t.privacyText;
-            const chartBtn = document.getElementById('chartToggleBtn');
-            setBtnWithIcon(chartBtn, ICONS.chart, isChartVisible ? t.chartHide : t.chartShow);
-            const fcBtn = document.getElementById('forecastToggleBtn');
-            setBtnWithIcon(fcBtn, ICONS.calendar, isForecastVisible ? t.forecastHide : t.forecastShow);
-            setBtnWithIcon(installBtnEl, ICONS.install, t.installBtn);
-
-            document.getElementById('btnPetrol').textContent = t.fuelPetrol;
-            document.getElementById('btnDiesel').textContent = t.fuelDiesel;
-            document.getElementById('btnLpg').textContent = t.fuelLpg;
-            document.getElementById('btnCng').textContent = t.fuelCng;
-
+            document.getElementById('commuterTitle').innerText = t.commuterTitle;
+            document.getElementById('legTemp').innerText = t.legTemp;
+            document.getElementById('legRain').innerText = t.legRain;
+            document.getElementById('legNight').innerText = t.legNight;
+            document.getElementById('feelLabel').innerText = t.feels;
+            document.getElementById('windSubLabel').innerText = t.gusts;
+            document.getElementById('donateText').innerText = t.donateText;
+            document.getElementById('donateBtn').innerText = t.donateBtn;
+            document.getElementById('privacyText').innerText = t.privacyText;
+            document.getElementById('copyCoordsBtn').innerText = t.copyBtn;
+            document.getElementById('chartToggleBtn').innerText = isChartVisible ? t.chartHide : t.chartShow;
+            document.getElementById('forecastToggleBtn').innerText = isForecastVisible ? t.forecastHide : t.forecastShow;
+            installBtnEl.innerText = t.installBtn;
+            
+            document.getElementById('btnPetrol').innerText = t.fuelPetrol;
+            document.getElementById('btnDiesel').innerText = t.fuelDiesel;
+            document.getElementById('btnLpg').innerText = t.fuelLpg;
+            document.getElementById('btnCng').innerText = t.fuelCng;
+            
             resetActionButtons();
         }
 
         function resetActionButtons() {
             const t = STRINGS[currentLang];
-
             const btnF = document.getElementById('fuelBtn');
-            btnF.className = 'full-btn btn-fuel';
-            setBtnWithIcon(btnF, ICONS.fuel, t.fuelBtn);
+            btnF.innerText = t.fuelBtn;
+            btnF.style.background = "var(--card-bg)";
+            btnF.style.color = "var(--accent-warn)";
             btnF.onclick = toggleFuelMenu;
 
             const btnM = document.getElementById('medBtn');
-            btnM.className = 'full-btn btn-med';
-            setBtnWithIcon(btnM, ICONS.med, t.medBtn);
+            btnM.innerText = t.medBtn;
+            btnM.style.background = "var(--card-bg)";
+            btnM.style.color = "var(--accent-risk)";
             btnM.onclick = findMedical;
 
             const btnS = document.getElementById('sosBtn');
-            btnS.className = 'full-btn btn-sos';
-            setBtnWithIcon(btnS, ICONS.sos, t.sosBtn);
+            btnS.innerText = t.sosBtn;
+            btnS.style.background = "var(--card-bg)";
+            btnS.style.color = "var(--accent-cold)";
             btnS.onclick = findSOS;
         }
 
-        function setBtnSearching(btn) {
-            btn.classList.add('searching');
-            btn.textContent = STRINGS[currentLang].searchStr;
-        }
-
-        function setBtnError(btn) {
-            const t = STRINGS[currentLang];
-            btn.classList.remove('searching');
-            btn.textContent = t.errStr;
-            setTimeout(() => { btn.classList.remove('result'); resetActionButtons(); }, 3000);
-        }
-
-        async function fetchWeather(isRetry = false) {
-            const loader = document.getElementById('loader');
-            const scoreCard = document.getElementById('scoreCard');
-            showSkeleton();
-            scoreCard.style.opacity = '0.5';
-
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weathercode,windgusts_10m,winddirection_10m,visibility&daily=weathercode,temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=4`;
-
+        async function fetchWithTimeout(url, timeoutMs = 5000) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
             try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("HTTP " + response.status);
-                const data = await response.json();
-                applyWeatherData(data, false);
-                try {
-                    localStorage.setItem('motoWeatherCache', JSON.stringify(data));
-                    localStorage.setItem('motoWeatherLat', String(currentLat));
-                    localStorage.setItem('motoWeatherLon', String(currentLon));
-                    localStorage.setItem('motoWeatherTime', String(Date.now()));
-                } catch (e) { /* storage full/blocked — non-fatal */ }
-            } catch (error) {
-                console.error(error);
-                if (!rawApiData || isRetry) {
-                    hideSkeleton();
-                    showWeatherRetryButton();
-                }
-            } finally {
-                loader.style.display = 'none';
-                hideSkeleton();
-                scoreCard.style.opacity = '1';
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return res;
+            } catch (err) {
+                clearTimeout(timer);
+                throw err;
             }
         }
 
-        function showWeatherRetryButton() {
-            const alertsCont = document.getElementById('alertsContainer');
-            alertsCont.innerHTML = '';
-            const badge = document.createElement('div');
-            badge.className = 'badge risk';
-            badge.style.cursor = 'pointer';
-            badge.setAttribute('role', 'button');
-            badge.textContent = STRINGS[currentLang].errWeatherStr;
-            badge.onclick = () => { badge.remove(); fetchWeather(true); };
-            alertsCont.appendChild(badge);
-        }
+        async function fetchWeather() {
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('scoreCard').style.opacity = '0.5';
 
-        function applyWeatherData(data, fromCache) {
-            rawApiData = data;
-            processData(data);
-            updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
-            resetActionButtons();
-            if (fromCache) fetchWeather(false);
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${currentLat}&longitude=${currentLon}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m&hourly=temperature_2m,apparent_temperature,dew_point_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,wind_direction_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&timezone=auto&forecast_days=4`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                rawApiData = data; 
+                processData(data);
+                updateDynamicBackground(data.daily.sunrise[0], data.daily.sunset[0]);
+                resetActionButtons();
+            } catch (error) {
+                console.error(error);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('scoreCard').style.opacity = '1';
+            }
         }
 
         function processData(data) {
-            const structuredDays = [];
+            let structuredDays = [];
 
             for (let d = 0; d < 4; d++) {
-                const startIdx = d * 24;
-                const endIdx = startIdx + 24;
+                let startIdx = d * 24;
+                let endIdx = startIdx + 24;
+                
+                const riseDate = new Date(data.daily.sunrise[d]);
+                const setDate = new Date(data.daily.sunset[d]);
+                const sunrise = riseDate.getHours();
+                const sunset = setDate.getHours();
 
-                const sunrise = new Date(data.daily.sunrise[d]).getHours();
-                const sunset = new Date(data.daily.sunset[d]).getHours();
-
-                const dayObj = {
+                let dayObj = {
                     date: data.daily.time[d],
                     sunrise: sunrise,
                     sunset: sunset,
+                    sunriseStr: riseDate.toTimeString().slice(0, 5),
+                    sunsetStr: setDate.toTimeString().slice(0, 5),
                     dailyMin: Math.round(data.daily.temperature_2m_min[d]),
                     dailyMax: Math.round(data.daily.temperature_2m_max[d]),
-                    dailyFeelMin: data.daily.apparent_temperature_min !== undefined
-                        ? Math.round(data.daily.apparent_temperature_min[d]) : null,
-                    dailyFeelMax: data.daily.apparent_temperature_max !== undefined
-                        ? Math.round(data.daily.apparent_temperature_max[d]) : null,
                     dailyRainProb: data.daily.precipitation_probability_max[d],
                     hourly: {
-                        times: [], hours: [], temps: [], feels: [], rain: [], gusts: [], wetRoad: [], codes: []
+                        times: [], temps: [], feels: [], rain: [], wind: [], windDir: [], vis: [], wetRoad: [], visorFog: []
                     },
                     stats: {
-                        maxWind: 0, avgWindDir: 0, minTemp: Infinity, minFeel: Infinity,
-                        hasRain: false, isStorm: false, hasWetRoad: false, alerts: []
+                        maxWind: 0, avgWindDir: 0, minTemp: 100, minFeel: 100,
+                        hasRain: false, isStorm: false, hasWetRoad: false, hasVisorFog: false, alerts: []
                     }
                 };
 
-                // Vector averaging for wind direction (fixes wrap-around bug)
-                let sinSum = 0, cosSum = 0, count = 0;
-                let hoursSinceLastHeavyRain = Infinity;
+                let sinSum = 0;
+                let cosSum = 0;
+                let count = 0;
 
                 for (let h = startIdx; h < endIdx; h++) {
                     if (!data.hourly.time[h]) continue;
 
                     const temp = data.hourly.temperature_2m[h];
                     const feel = data.hourly.apparent_temperature[h];
+                    const dew = data.hourly.dew_point_2m[h];
                     const rainP = data.hourly.precipitation_probability[h];
                     const precipAmount = data.hourly.precipitation[h];
-                    const gust = data.hourly.windgusts_10m[h];
-                    const dir = data.hourly.winddirection_10m[h];
+                    const gust = data.hourly.wind_gusts_10m[h];
+                    const dir = data.hourly.wind_direction_10m[h];
                     const vis = data.hourly.visibility[h];
-                    const code = data.hourly.weathercode[h];
+                    const code = data.hourly.weather_code[h];
+                    
                     const dateObj = new Date(data.hourly.time[h]);
-
-                    dayObj.hourly.times.push(dateObj.getHours() + ':00');
-                    dayObj.hourly.hours.push(dateObj.getHours());
+                    const hourNum = dateObj.getHours();
+                    dayObj.hourly.times.push(hourNum + ':00');
                     dayObj.hourly.temps.push(temp);
-                    dayObj.hourly.feels.push(Math.round(feel));
+                    dayObj.hourly.feels.push(feel);
                     dayObj.hourly.rain.push(rainP);
-                    dayObj.hourly.gusts.push(gust);
-                    dayObj.hourly.codes.push(code);
-
-                    if (precipAmount > 1.5) {
-                        hoursSinceLastHeavyRain = 0;
-                    } else if (hoursSinceLastHeavyRain < Infinity) {
-                        hoursSinceLastHeavyRain++;
+                    dayObj.hourly.wind.push(gust);
+                    dayObj.hourly.windDir.push(dir);
+                    
+                    let isWet = precipAmount > 0.3;
+                    const lookback = (temp < 15 || hourNum < sunrise || hourNum >= sunset) ? 3 : 1;
+                    for (let lb = 1; lb <= lookback; lb++) {
+                        if (h - lb >= 0 && data.hourly.precipitation[h - lb] > 1.0) {
+                            isWet = true;
+                        }
                     }
-
-                    let isWet = false;
-                    if (hoursSinceLastHeavyRain <= WET_ROAD_PERSISTENCE_HOURS) isWet = true;
-                    if (precipAmount > 0.5) isWet = true;
-
                     dayObj.hourly.wetRoad.push(isWet);
                     if (isWet) dayObj.stats.hasWetRoad = true;
+
+                    const isVisorFog = (temp - dew < 2.2) && temp < 16;
+                    dayObj.hourly.visorFog.push(isVisorFog);
+                    if (isVisorFog) dayObj.stats.hasVisorFog = true;
 
                     if (gust > dayObj.stats.maxWind) dayObj.stats.maxWind = gust;
                     if (temp < dayObj.stats.minTemp) dayObj.stats.minTemp = temp;
@@ -1062,130 +801,48 @@
                     if (rainP > 40) dayObj.stats.hasRain = true;
                     if ([95, 96, 99, 71, 73, 75, 77].includes(code)) dayObj.stats.isStorm = true;
 
-                    const rad = dir * Math.PI / 180;
+                    const rad = dir * (Math.PI / 180);
                     sinSum += Math.sin(rad);
                     cosSum += Math.cos(rad);
                     count++;
 
-                    if (temp < 0 && !dayObj.stats.alerts.includes('freeze')) dayObj.stats.alerts.push('freeze');
+                    if (temp < 2 && !dayObj.stats.alerts.includes('freeze')) dayObj.stats.alerts.push('freeze');
                     else if (temp < 10 && !dayObj.stats.alerts.includes('cold')) dayObj.stats.alerts.push('cold');
                     if (gust > 50 && !dayObj.stats.alerts.includes('wind')) dayObj.stats.alerts.push('wind');
                     if (vis < 1000 && !dayObj.stats.alerts.includes('fog')) dayObj.stats.alerts.push('fog');
                 }
 
-                dayObj.stats.avgWindDir = count > 0
-                    ? ((Math.atan2(sinSum / count, cosSum / count) * 180 / Math.PI) + 360) % 360
-                    : 0;
+                if (count > 0) {
+                    const meanRad = Math.atan2(sinSum / count, cosSum / count);
+                    dayObj.stats.avgWindDir = (meanRad * (180 / Math.PI) + 360) % 360;
+                }
+
                 structuredDays.push(dayObj);
             }
 
             weatherDataCache = structuredDays;
-            renderForecastList();
-            selectDay(Math.min(selectedDayIndex, structuredDays.length - 1));
+            renderForecastList(); 
+            selectDay(0); 
         }
 
         function selectDay(index) {
             selectedDayIndex = index;
-            closePopover();
+            selectedHourIndex = null;
+            document.getElementById('resetHourBtn').style.display = 'none';
             renderDashboard(index);
             updateListSelection(index);
         }
 
-        // Smooth risk→color interpolation for timeline blocks (#2)
-        // risk: 0 (perfect) .. 1 (dangerous)
-        function riskColor(risk) {
-            // green (0,255,157) → yellow (255,202,0) → red (255,94,94)
-            const stops = [
-                [0.0, [0, 255, 157]],
-                [0.5, [255, 202, 0]],
-                [1.0, [255, 94, 94]]
-            ];
-            let lo = stops[0], hi = stops[stops.length - 1];
-            for (let i = 0; i < stops.length - 1; i++) {
-                if (risk >= stops[i][0] && risk <= stops[i + 1][0]) {
-                    lo = stops[i]; hi = stops[i + 1]; break;
-                }
-            }
-            const span = hi[0] - lo[0] || 1;
-            const f = (risk - lo[0]) / span;
-            const c = lo[1].map((v, i) => Math.round(v + (hi[1][i] - v) * f));
-            return `rgb(${c[0]},${c[1]},${c[2]})`;
+        function selectHour(hourIdx) {
+            selectedHourIndex = hourIdx;
+            document.getElementById('resetHourBtn').style.display = 'inline-block';
+            renderDashboard(selectedDayIndex);
         }
 
-        // Per-hour risk model: rain probability, wet road, cold, high gusts
-        function hourRisk(temp, rainP, isWet, gust) {
-            let risk = 0;
-            if (rainP > 40) risk += 0.55 * Math.min((rainP - 40) / 60, 1);
-            if (isWet) risk += 0.25;
-            if (temp < 10) risk += 0.25 * Math.min((10 - temp) / 10, 1);
-            if (temp < 0) risk += 0.2;
-            if (gust > 40) risk += 0.2 * Math.min((gust - 40) / 40, 1);
-            return Math.min(risk, 1);
-        }
-
-        // Wind compass SVG (#8)
-        function compassSvg(dirDeg) {
-            const needleAngle = dirDeg + 180; // points where wind blows TO
-            return `<svg class="compass" viewBox="0 0 64 64" aria-hidden="true">
-                <circle cx="32" cy="32" r="29" fill="rgba(0,0,0,0.35)" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-                ${['N','E','S','W'].map((lbl, i) => {
-                    const a = (i * 90 - 90) * Math.PI / 180;
-                    const x = 32 + 23 * Math.cos(a), y = 32 + 23 * Math.sin(a);
-                    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="middle" fill="#bbb" font-size="9" font-family="sans-serif">${lbl}</text>`;
-                }).join('')}
-                <g class="needle-group" style="transform: rotate(${needleAngle}deg)">
-                    <polygon points="32,10 36,34 32,30 28,34" fill="#00d5ff"/>
-                    <polygon points="32,54 36,34 32,38 28,34" fill="rgba(255,255,255,0.35)"/>
-                </g>
-                <circle cx="32" cy="32" r="2.4" fill="#fff"/>
-            </svg>`;
-        }
-
-        function closePopover() {
-            if (openPopover) { openPopover.remove(); openPopover = null; }
-            document.querySelectorAll('.hour-block.selected').forEach(el => el.classList.remove('selected'));
-        }
-
-        function toggleHourPopover(hourBlock, container, dayData, i) {
-            const wasOpen = hourBlock.classList.contains('selected');
-            closePopover();
-            if (wasOpen) return;
-
-            const t = STRINGS[currentLang];
-            hourBlock.classList.add('selected');
-
-            const pop = document.createElement('div');
-            pop.className = 'hour-popover';
-
-            const title = document.createElement('div');
-            title.className = 'hp-title';
-            title.textContent = `${t.hpHour} ${String(dayData.hourly.hours[i]).padStart(2, '0')}:00 · ${Math.round(dayData.hourly.temps[i])}°`;
-            pop.appendChild(title);
-
-            const rows = [
-                [t.hpFeel, `${dayData.hourly.feels[i]}°`],
-                [t.hpGust, `${Math.round(dayData.hourly.gusts[i])} km/h`],
-                [t.hpRainP, `${dayData.hourly.rain[i]}%`],
-                [t.hpWet, dayData.hourly.wetRoad[i] ? t.hpYes : t.hpNo]
-            ];
-            rows.forEach(([k, v]) => {
-                const row = document.createElement('div');
-                row.className = 'hp-row';
-                const kEl = document.createElement('span'); kEl.textContent = k;
-                const vEl = document.createElement('b'); vEl.textContent = v;
-                row.appendChild(kEl); row.appendChild(vEl);
-                pop.appendChild(row);
-            });
-            // Mini weather icon for this hour's code
-            const mini = document.createElement('span');
-            mini.innerHTML = weatherSvg(dayData.hourly.codes[i]);
-            const miniSvg = mini.querySelector('svg');
-            miniSvg.style.width = '34px'; miniSvg.style.height = '34px';
-            miniSvg.style.position = 'absolute'; miniSvg.style.top = '8px'; miniSvg.style.right = '8px';
-            pop.appendChild(mini);
-
-            container.appendChild(pop);
-            openPopover = pop;
+        function resetHourSelection() {
+            selectedHourIndex = null;
+            document.getElementById('resetHourBtn').style.display = 'none';
+            renderDashboard(selectedDayIndex);
         }
 
         function renderDashboard(dayIndex) {
@@ -1194,76 +851,72 @@
             const dayData = weatherDataCache[dayIndex];
             const stats = dayData.stats;
 
+            document.getElementById('sunTimesDisplay').innerText = `🌅 ${dayData.sunriseStr}  🌇 ${dayData.sunsetStr}`;
+
             const dateObj = new Date(dayData.date);
             const dayName = t.days[dateObj.getDay()];
-            const headerText = dayIndex === 0 ? `${t.today} (${dayName})` : dayName + ` ${dateObj.getDate()}`;
-            document.getElementById('dateLabel').textContent = headerText;
+            let headerText = dayIndex === 0 ? `${t.today} (${dayName})` : `${dayName} ${dateObj.getDate()}`;
 
-            let displayTemp, displayFeel;
-            if (dayIndex === 0) {
-                const nowIsoPrefix = new Date().toISOString().slice(0, 13);
-                let currentHourIdx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
-                if (currentHourIdx === -1) currentHourIdx = 0;
+            let displayTemp, displayFeel, displayWind, displayRain, displayDir;
 
-                displayTemp = Math.round(rawApiData.hourly.temperature_2m[currentHourIdx]);
-                displayFeel = Math.round(rawApiData.hourly.apparent_temperature[currentHourIdx]);
+            if (selectedHourIndex !== null) {
+                headerText += ` • ${dayData.hourly.times[selectedHourIndex]}`;
+                displayTemp = Math.round(dayData.hourly.temps[selectedHourIndex]);
+                displayFeel = Math.round(dayData.hourly.feels[selectedHourIndex]);
+                displayWind = Math.round(dayData.hourly.wind[selectedHourIndex]);
+                displayRain = dayData.hourly.rain[selectedHourIndex];
+                displayDir = dayData.hourly.windDir[selectedHourIndex];
+            } else if (dayIndex === 0 && rawApiData.current) {
+                displayTemp = Math.round(rawApiData.current.temperature_2m);
+                displayFeel = Math.round(rawApiData.current.apparent_temperature);
+                displayWind = Math.round(Math.max(rawApiData.current.wind_gusts_10m, stats.maxWind));
+                displayRain = dayData.dailyRainProb;
+                displayDir = rawApiData.current.wind_direction_10m;
             } else {
                 displayTemp = dayData.dailyMax;
-                displayFeel = dayData.dailyFeelMin !== null ? dayData.dailyFeelMin : dayData.dailyMax;
+                displayFeel = dayData.dailyMax;
+                displayWind = Math.round(stats.maxWind);
+                displayRain = dayData.dailyRainProb;
+                displayDir = stats.avgWindDir;
             }
 
-            document.getElementById('tempStat').textContent = displayTemp;
-            document.getElementById('feelStat').textContent = displayFeel + "°";
-            document.getElementById('windStat').textContent = Math.round(stats.maxWind) + " km/h";
-            document.getElementById('rainStat').textContent = dayData.dailyRainProb + "%";
-
-            // Animated weather icon (#1)
-            const iconEl = document.getElementById('weatherIcon');
-            if (dayIndex === 0 && rawApiData) {
-                const nowIsoPrefix = new Date().toISOString().slice(0, 13);
-                let idx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
-                if (idx === -1) idx = 0;
-                iconEl.innerHTML = weatherSvg(rawApiData.hourly.weathercode[idx]);
-            } else if (rawApiData && rawApiData.daily.weathercode[dayIndex] !== undefined) {
-                iconEl.innerHTML = weatherSvg(rawApiData.daily.weathercode[dayIndex]);
-            } else {
-                iconEl.innerHTML = '';
-            }
-
-            // Wind compass (#8)
-            const compassWrap = document.getElementById('windCompass');
-            compassWrap.innerHTML = compassSvg(stats.avgWindDir);
+            document.getElementById('dateLabel').innerText = headerText;
+            document.getElementById('tempStat').innerText = displayTemp;
+            document.getElementById('feelStat').innerText = displayFeel + "°C";
+            document.getElementById('windStat').innerText = displayWind + " km/h";
+            document.getElementById('rainStat').innerText = displayRain + "%";
+            document.getElementById('windArrow').style.transform = `rotate(${displayDir + 180}deg)`;
 
             const barContainer = document.getElementById('commuterBar');
             const axisContainer = document.getElementById('commuterAxis');
             barContainer.innerHTML = '';
             axisContainer.innerHTML = '';
-
-            const nowHour = dayIndex === 0 ? new Date().getHours() : -1;
+            
+            const currentHour = new Date().getHours();
 
             for (let i = 0; i < dayData.hourly.times.length; i++) {
                 const hourDiv = document.createElement('div');
                 hourDiv.className = 'hour-block';
+                if (dayIndex === 0 && i === currentHour) hourDiv.classList.add('now-hour');
+                if (i === selectedHourIndex) hourDiv.classList.add('selected-hour');
+
                 const hTemp = dayData.hourly.temps[i];
                 const hRainP = dayData.hourly.rain[i];
-                const hGust = dayData.hourly.gusts[i];
+                const hGust = dayData.hourly.wind[i];
                 const isWet = dayData.hourly.wetRoad[i];
-
-                // Smooth interpolated color (#2)
-                hourDiv.style.background = riskColor(hourRisk(hTemp, hRainP, isWet, hGust));
-
-                if (dayData.hourly.hours[i] < nowHour) hourDiv.classList.add('past');
-                if (dayIndex === 0 && dayData.hourly.hours[i] === nowHour) hourDiv.classList.add('current');
-
-                const capturedIndex = i;
-                hourDiv.addEventListener('click', () => toggleHourPopover(hourDiv, barContainer.parentElement, dayData, capturedIndex));
-
+                
+                let bg = 'var(--accent-safe)'; 
+                if (hTemp < 10 || hGust > 40) bg = 'var(--accent-warn)';
+                if (hRainP > 40 || isWet || hGust > 60 || hTemp < 2) bg = 'var(--accent-risk)';
+                
+                hourDiv.style.background = bg;
+                hourDiv.onclick = () => selectHour(i);
                 barContainer.appendChild(hourDiv);
 
                 const axisDiv = document.createElement('div');
                 axisDiv.className = 'axis-tick';
-                if (dayData.hourly.hours[i] % 3 === 0) {
-                    axisDiv.textContent = dayData.hourly.hours[i];
+                if (i % 3 === 0) { 
+                    axisDiv.innerText = i; 
                     axisDiv.classList.add('visible');
                 }
                 axisContainer.appendChild(axisDiv);
@@ -1271,153 +924,76 @@
 
             const alertsCont = document.getElementById('alertsContainer');
             alertsCont.innerHTML = '';
-            let badgeCount = 0;
 
-            function addBadge(text, type, iconKey) {
-                const badge = document.createElement('div');
-                badge.className = `badge ${type}`;
-                // Staggered cascade entry (#9)
-                badge.style.animationDelay = `${badgeCount * 60}ms`;
-                badgeCount++;
-                if (iconKey && ICONS[iconKey]) {
-                    const ic = document.createElement('span');
-                    ic.innerHTML = ICONS[iconKey];
-                    const svg = ic.querySelector('svg');
-                    if (svg) badge.appendChild(svg);
-                }
-                const txt = document.createElement('span');
-                txt.textContent = text;
-                badge.appendChild(txt);
-                alertsCont.appendChild(badge);
+            let hazardLevel = 0; 
+            if (stats.isStorm) { createBadge(t.warnStorm, 'risk'); hazardLevel = 2; }
+            if (stats.hasWetRoad) { createBadge(t.warnWet, 'risk'); hazardLevel = Math.max(hazardLevel, 2); }
+            if (stats.alerts.includes('freeze')) { createBadge(t.warnFreeze, 'risk'); hazardLevel = 2; }
+            if (stats.alerts.includes('wind')) { createBadge(t.warnWind, 'warn'); hazardLevel = Math.max(hazardLevel, 1); }
+            if (stats.alerts.includes('fog')) { createBadge(t.warnFog, 'warn'); hazardLevel = Math.max(hazardLevel, 1); }
+            if (stats.hasVisorFog) { createBadge(t.warnVisorFog, 'warn'); hazardLevel = Math.max(hazardLevel, 1); }
+            if (stats.hasRain && !stats.isStorm) { createBadge(t.warnRain, 'warn'); hazardLevel = Math.max(hazardLevel, 1); }
+            if (stats.alerts.includes('cold') && !stats.alerts.includes('freeze')) { createBadge(t.warnCold, 'cold'); hazardLevel = Math.max(hazardLevel, 1); }
+            if (alertsCont.innerHTML === '') createBadge(t.safe, 'safe');
+
+            const pill = document.getElementById('rideStatusPill');
+            if (hazardLevel === 2) {
+                pill.innerText = t.rideHazard;
+                pill.style.color = 'var(--accent-risk)';
+                pill.style.background = 'rgba(255, 94, 94, 0.12)';
+            } else if (hazardLevel === 1) {
+                pill.innerText = t.rideCaution;
+                pill.style.color = 'var(--accent-warn)';
+                pill.style.background = 'rgba(255, 202, 0, 0.12)';
+            } else {
+                pill.innerText = t.rideGo;
+                pill.style.color = 'var(--accent-safe)';
+                pill.style.background = 'rgba(0, 255, 157, 0.12)';
             }
 
-            if (stats.isStorm) addBadge(t.warnStorm, 'risk', 'wind');
-            if (stats.hasWetRoad) addBadge(t.warnWet, 'risk', 'droplet');
-            if (stats.alerts.includes('freeze')) addBadge(t.warnFreeze, 'risk', null);
-            if (stats.alerts.includes('wind')) addBadge(t.warnWind, 'warn', 'wind');
-            if (stats.alerts.includes('fog')) addBadge(t.warnFog, 'warn', null);
-            if (stats.hasRain && !stats.isStorm) addBadge(t.warnRain, 'warn', 'droplet');
-            if (stats.alerts.includes('cold') && !stats.alerts.includes('freeze')) addBadge(t.warnCold, 'cold', null);
-            if (alertsCont.children.length === 0) addBadge(t.safe, 'safe', 'sun');
-
-            renderInfoChips(dayIndex);
-
-            drawChart(dayData);
+            if (isChartVisible) drawChart(dayData);
         }
 
-        function renderInfoChips(dayIndex) {
-            const t = STRINGS[currentLang];
-            const chips = document.getElementById('infoChips');
-            chips.innerHTML = '';
-
-            const now = new Date();
-
-            // --- Rain start alert ---
-            if (dayIndex === 0 && rawApiData) {
-                const nowIsoPrefix = now.toISOString().slice(0, 13);
-                let startIdx = rawApiData.hourly.time.findIndex(ts => ts.startsWith(nowIsoPrefix));
-                if (startIdx === -1) startIdx = 0;
-
-                const wasRainingBefore = (h) => h > 0 && rawApiData.hourly.precipitation[h - 1] > 0.1;
-                for (let h = startIdx; h < Math.min(startIdx + 6, rawApiData.hourly.time.length); h++) {
-                    const p = rawApiData.hourly.precipitation[h];
-                    const prob = rawApiData.hourly.precipitation_probability[h];
-                    if (p >= 0.3 && prob >= 40 && !wasRainingBefore(h)) {
-                        const chip = makeChip(`🌧️ ${t.rainStart} ${t.around} ${String(new Date(rawApiData.hourly.time[h]).getHours()).padStart(2, '0')}:00`);
-                        chips.appendChild(chip);
-                        break;
-                    }
-                }
-            }
-
-            // --- Sunrise/sunset countdown ---
-            if (dayIndex === 0 && rawApiData) {
-                const sunrise = new Date(rawApiData.daily.sunrise[0]);
-                const sunset = new Date(rawApiData.daily.sunset[0]);
-                let chip = null;
-                const clockIcon = ICONS.clock.replace('stroke="currentColor"', `stroke="#ffca00"`);
-
-                if (now < sunrise) {
-                    chip = makeChip(`${clockIcon}<span>${t.sunriseIn} ${formatDuration(Math.round((sunrise - now) / 60000))}</span>`);
-                } else if (now < sunset) {
-                    chip = makeChip(`${clockIcon}<span>${t.sunsetIn} ${formatDuration(Math.round((sunset - now) / 60000))}</span>`);
-                } else {
-                    const tomorrowSunrise = new Date(rawApiData.daily.sunrise[1]);
-                    if (tomorrowSunrise && !isNaN(tomorrowSunrise)) {
-                        chip = makeChip(`${clockIcon}<span>${t.sunriseIn} ${formatDuration(Math.round((tomorrowSunrise - now) / 60000))}</span>`);
-                    }
-                }
-                if (chip) chips.appendChild(chip);
-            }
-
-            // --- Data staleness label ---
-            if (dayIndex === 0) {
-                const savedAt = parseInt(localStorage.getItem('motoWeatherTime') || '0', 10);
-                if (savedAt > 0) {
-                    const ageHours = Math.floor((Date.now() - savedAt) / 3600000);
-                    if (ageHours >= 2) {
-                        chips.appendChild(makeChip(`<span style="color:var(--accent-warn)">⏳</span><span>${t.dataFrom} ${ageHours} ${t.hoursAgo}</span>`));
-                    }
-                }
-            }
-        }
-
-        function makeChip(innerHtml) {
-            const el = document.createElement('div');
-            el.className = 'chip';
-            el.innerHTML = innerHtml; // built from trusted constants + numbers only
-            return el;
+        function createBadge(text, type) {
+            const badge = document.createElement('div');
+            badge.className = `badge ${type}`;
+            badge.innerText = text;
+            document.getElementById('alertsContainer').appendChild(badge);
         }
 
         const backgroundPlugin = {
             id: 'bgPlugin',
-            beforeDatasetsDraw: (chart) => {
+            beforeDraw: (chart) => {
                 const ctx = chart.ctx;
                 const xAxis = chart.scales.x;
                 const yAxis = chart.scales.y;
                 const top = yAxis.top;
                 const bottom = yAxis.bottom;
-
+                
                 if (!weatherDataCache) return;
                 const dayData = weatherDataCache[selectedDayIndex];
-
-                // Wet-road bands (#6) drawn under datasets, over grid
-                if (dayData.hourly.wetRoad) {
-                    ctx.save();
-                    ctx.fillStyle = 'rgba(0, 110, 255, 0.13)';
-                    dayData.hourly.wetRoad.forEach((wet, index) => {
-                        if (!wet) return;
-                        const xStart = xAxis.getPixelForValue(index);
-                        let width = xAxis.getPixelForValue(index + 1) - xStart;
-                        if (index === dayData.hourly.wetRoad.length - 1)
-                            width = xStart - xAxis.getPixelForValue(index - 1);
-                        ctx.fillRect(xStart - width / 2, top, width, bottom - top);
-                    });
-                    ctx.restore();
-                }
-
-                // Night shading
                 const sunrise = dayData.sunrise;
                 const sunset = dayData.sunset;
+
                 chart.data.labels.forEach((label, index) => {
                     const hour = parseInt(label.split(':')[0]);
                     if (hour < sunrise || hour >= sunset) {
-                        const xStart = xAxis.getPixelForValue(index);
-                        let width = 0;
-                        if (index < chart.data.labels.length - 1) width = xAxis.getPixelForValue(index + 1) - xStart;
-                        else width = xStart - xAxis.getPixelForValue(index - 1);
-                        ctx.fillStyle = 'rgba(20, 30, 60, 0.4)';
-                        ctx.fillRect(xStart - width / 2, top, width, bottom - top);
+                         const xStart = xAxis.getPixelForValue(index);
+                         let width = index < chart.data.labels.length - 1
+                            ? xAxis.getPixelForValue(index + 1) - xStart
+                            : xStart - xAxis.getPixelForValue(index - 1);
+                         ctx.fillStyle = 'rgba(20, 30, 60, 0.45)';
+                         ctx.fillRect(xStart - width / 2, top, width, bottom - top);
                     }
                 });
 
                 if (selectedDayIndex === 0) {
                     const currentHour = new Date().getHours();
-                    const nowLabel = currentHour + ':00';
-                    const idx = chart.data.labels.indexOf(nowLabel);
+                    const idx = chart.data.labels.indexOf(currentHour + ':00');
                     if (idx >= 0) {
                         const xPos = xAxis.getPixelForValue(idx);
-                        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(0,0,0,0.55)'; 
                         ctx.fillRect(xAxis.left, top, xPos - xAxis.left, bottom - top);
                         ctx.beginPath();
                         ctx.moveTo(xPos, top);
@@ -1426,39 +1002,35 @@
                         ctx.setLineDash([4, 4]);
                         ctx.lineWidth = 1;
                         ctx.stroke();
+                        ctx.restore();
                     }
                 }
             }
         };
 
         function drawChart(dayData) {
-            const canvas = document.getElementById('weatherChart');
-            const ctx = canvas.getContext('2d');
-            if (chartInstance) chartInstance.destroy();
+            if (typeof Chart === 'undefined') return;
+            Chart.defaults.font.size = 12;
+            Chart.defaults.color = '#a1a1aa';
 
-            // Gradient fill under temperature line (#6)
-            const areaGradient = (() => {
-                const g = ctx.createLinearGradient(0, 0, 0, 300);
-                g.addColorStop(0, 'rgba(0, 255, 157, 0.28)');
-                g.addColorStop(1, 'rgba(0, 255, 157, 0)');
-                return g;
-            })();
+            const ctx = document.getElementById('weatherChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
 
             chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: dayData.hourly.times,
                     datasets: [
-                        { type: 'line', data: dayData.hourly.temps, borderColor: '#00ff9d', borderWidth: 3, yAxisID: 'y', tension: 0.4, pointRadius: 0, fill: true, backgroundColor: areaGradient },
-                        { type: 'bar', data: dayData.hourly.rain, backgroundColor: 'rgba(0, 213, 255, 0.3)', yAxisID: 'y1', borderRadius: 4, borderSkipped: false, barPercentage: 0.7 }
+                        { type: 'line', data: dayData.hourly.temps, borderColor: '#00ff9d', borderWidth: 3, yAxisID: 'y', tension: 0.35, pointRadius: 0 },
+                        { type: 'bar', data: dayData.hourly.rain, backgroundColor: 'rgba(0, 213, 255, 0.35)', yAxisID: 'y1' }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#222', titleColor: '#fff', bodyColor: '#ccc' } },
+                    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#18181b', titleColor:'#fff', bodyColor:'#ccc' } },
                     scales: {
-                        x: { ticks: { color: '#ccc', maxTicksLimit: 8 }, grid: { display: false } },
-                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.08)' } },
+                        x: { ticks: { color: '#a1a1aa', maxTicksLimit: 8 }, grid: { display: false } },
+                        y: { type: 'linear', display: true, position: 'left', ticks: { color: '#a1a1aa' }, grid: { color: 'rgba(255,255,255,0.08)' } },
                         y1: { type: 'linear', display: true, position: 'right', min: 0, max: 100, grid: { display: false }, ticks: { display: false } }
                     }
                 },
@@ -1473,36 +1045,20 @@
 
             weatherDataCache.forEach((dayData, index) => {
                 const date = new Date(dayData.date);
-                let dayName = t.days[date.getDay()];
-                if (index === 0) dayName = t.today;
-
+                let dayName = index === 0 ? t.today : t.days[date.getDay()];
+                
                 const div = document.createElement('div');
                 div.className = 'forecast-item';
                 div.id = `day-btn-${index}`;
-                div.onclick = () => selectDay(index);
-
-                const dayDiv = document.createElement('div');
-                dayDiv.className = 'f-day';
-                dayDiv.textContent = dayName;
-
-                const detailDiv = document.createElement('div');
-                detailDiv.className = 'f-detail';
-                const tempSpan = document.createElement('span');
-                tempSpan.style.color = '#aaa';
-                const feelSuffix = dayData.dailyFeelMin !== null ? ` (feels ${dayData.dailyFeelMin}°)` : '';
-                tempSpan.textContent = `${dayData.dailyMin}° / ${dayData.dailyMax}°${feelSuffix}`;
-
-                // Day weather icon
-                const icSpan = document.createElement('span');
-                icSpan.innerHTML = weatherSvg(rawApiData?.daily?.weathercode?.[index] ?? 3);
-                const icSvg = icSpan.querySelector('svg');
-                if (icSvg) { icSvg.style.width = '30px'; icSvg.style.height = '30px'; }
-
-                detailDiv.appendChild(tempSpan);
-                if (icSvg) detailDiv.appendChild(icSpan);
-
-                div.appendChild(dayDiv);
-                div.appendChild(detailDiv);
+                div.onclick = () => selectDay(index); 
+                
+                div.innerHTML = `
+                    <div class="f-day">${dayName}</div>
+                    <div class="f-detail">
+                        <span>🌧️ ${dayData.dailyRainProb}%</span>
+                        <span style="color:#fff; font-weight:700;">${dayData.dailyMin}° / ${dayData.dailyMax}°C</span>
+                    </div>
+                `;
                 list.appendChild(div);
             });
         }
@@ -1510,10 +1066,7 @@
         function updateListSelection(selectedIndex) {
             for (let i = 0; i < 4; i++) {
                 const el = document.getElementById(`day-btn-${i}`);
-                if (el) {
-                    if (i === selectedIndex) el.classList.add('active');
-                    else el.classList.remove('active');
-                }
+                if (el) el.classList.toggle('active', i === selectedIndex);
             }
         }
 
@@ -1525,20 +1078,24 @@
             const currentMins = now.getHours() * 60 + now.getMinutes();
             const riseMins = sunrise.getHours() * 60 + sunrise.getMinutes();
             const setMins = sunset.getHours() * 60 + sunset.getMinutes();
-            const transition = 60;
+            const transition = 60; 
             let gradient = '';
 
-            if (currentMins < riseMins - transition) gradient = "linear-gradient(to bottom, #000000, #080a10)";
-            else if (currentMins < riseMins + transition) gradient = "linear-gradient(to bottom, #0f0c29, #302b63, #24243e)";
-            else if (currentMins < setMins - transition) gradient = "linear-gradient(to bottom, #1a1a1a, #252525)";
-            else if (currentMins < setMins + transition) gradient = "linear-gradient(to bottom, #203a43, #2c5364)";
-            else gradient = "linear-gradient(to bottom, #000000, #080a10)";
+            if (currentMins < riseMins - transition || currentMins >= setMins + transition) {
+                gradient = "linear-gradient(to bottom, #050508, #0f131d)";
+            } else if (currentMins < riseMins + transition) {
+                gradient = "linear-gradient(to bottom, #110e2e, #2a2550)"; 
+            } else if (currentMins < setMins - transition) {
+                gradient = "linear-gradient(to bottom, #121214, #1f1f24)"; 
+            } else {
+                gradient = "linear-gradient(to bottom, #16262e, #243b47)"; 
+            }
 
             document.body.style.background = gradient;
         }
 
         function haversineDist(lat1, lon1, lat2, lon2) {
-            const R = 6371;
+            const R = 6371; 
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -1547,179 +1104,237 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        async function overpassQuery(query) {
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("HTTP Status " + res.status);
-            return res.json();
-        }
+        async function queryOverpassNearest(queryBody) {
+            const query = `[out:json][timeout:6];(${queryBody});out center;`;
+            
+            for (const server of OVERPASS_SERVERS) {
+                try {
+                    const url = `${server}?data=${encodeURIComponent(query)}`;
+                    const res = await fetchWithTimeout(url, 6000);
+                    if (!res.ok) continue;
+                    
+                    const data = await res.json();
+                    if (!data.elements || data.elements.length === 0) return null;
 
-        function findNearestElement(data) {
-            let nearest = null;
-            let minDist = Infinity;
-            (data.elements || []).forEach(el => {
-                const lat = el.lat ?? el.center?.lat;
-                const lon = el.lon ?? el.center?.lon;
-                if (lat != null && lon != null) {
-                    const d = haversineDist(currentLat, currentLon, lat, lon);
-                    if (d < minDist) {
-                        minDist = d;
-                        nearest = { lat, lon, tags: el.tags || {} };
-                    }
+                    let nearest = null;
+                    let minDist = Infinity;
+                    data.elements.forEach(el => {
+                        const lat = el.lat || el.center?.lat;
+                        const lon = el.lon || el.center?.lon;
+                        if (lat && lon) {
+                            const d = haversineDist(currentLat, currentLon, lat, lon);
+                            if (d < minDist) {
+                                minDist = d;
+                                nearest = { lat, lon, tags: el.tags, dist: d };
+                            }
+                        }
+                    });
+                    return nearest;
+                } catch (e) {
+                    // Fallback στον επόμενο server
                 }
-            });
-            return nearest ? { ...nearest, dist: minDist } : null;
-        }
-
-        function presentPoiResult(btn, nearest, fallbackName, iconName, mapsUrl) {
-            const t = STRINGS[currentLang];
-            if (!nearest) {
-                btn.textContent = t.noneStr;
-                setTimeout(resetActionButtons, 3000);
-                return;
             }
-            const stName = nearest.tags.name || nearest.tags.brand || fallbackName;
-            btn.classList.remove('searching');
-            btn.classList.add('result');
-            setBtnWithIcon(btn, ICONS[iconName], `${stName} (${nearest.dist.toFixed(1)}km) ➔ GO`);
-            btn.onclick = () => window.open(mapsUrl, '_blank', 'noopener');
+            throw new Error("All Overpass servers unreachable");
         }
 
         async function findSpecificFuel(type) {
             const btn = document.getElementById('fuelBtn');
-            setBtnSearching(btn);
+            const t = STRINGS[currentLang];
+            btn.innerText = t.searchStr;
+            btn.onclick = null; 
 
             isFuelMenuVisible = false;
             document.getElementById('fuelMenuWrapper').classList.remove('expanded');
 
-            let tagFilter = '["amenity"="fuel"]';
-            if (type === 'lpg') tagFilter = '["amenity"="fuel"]["fuel:lpg"="yes"]';
-            if (type === 'cng') tagFilter = '["amenity"="fuel"]["fuel:cng"="yes"]';
-
-            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})${tagFilter};way(around:15000,${currentLat},${currentLon})${tagFilter};);out center;`;
+            const r = 15000;
+            let specificTag = '["amenity"="fuel"]';
+            if (type === 'lpg') specificTag = '["amenity"="fuel"]["fuel:lpg"="yes"]';
+            if (type === 'cng') specificTag = '["amenity"="fuel"]["fuel:cng"="yes"]';
+            if (type === 'diesel') specificTag = '["amenity"="fuel"]["fuel:diesel"="yes"]';
+            if (type === 'petrol') specificTag = '["amenity"="fuel"]["fuel:octane_95"="yes"]';
 
             try {
-                const data = await overpassQuery(query);
-                const nearest = findNearestElement(data);
-                const mapsUrl = nearest
-                    ? `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`
-                    : '';
-                presentPoiResult(btn, nearest, STRINGS[currentLang].gasStation, 'fuel', mapsUrl);
+                let nearest = await queryOverpassNearest(`nwr(around:${r},${currentLat},${currentLon})${specificTag};`);
+                if (!nearest && (type === 'petrol' || type === 'diesel')) {
+                    nearest = await queryOverpassNearest(`nwr(around:${r},${currentLat},${currentLon})["amenity"="fuel"];`);
+                }
+
+                if (!nearest) {
+                    btn.innerText = t.noneStr;
+                    setTimeout(resetActionButtons, 3000);
+                    return;
+                }
+
+                const stName = nearest.tags?.name || nearest.tags?.brand || t.gasStation;
+                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`;
+                const fuelIcon = (type === 'lpg' || type === 'cng') ? '♻️' : '⛽';
+
+                btn.innerHTML = `${fuelIcon} ${stName} (${nearest.dist.toFixed(1)} km) ➔ GO`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.open(mapsUrl, '_blank');
             } catch (e) {
-                console.error(e);
-                setBtnError(btn);
+                const fallbackUrl = `https://www.google.com/maps/search/fuel+${type}/@${currentLat},${currentLon},13z`;
+                btn.innerHTML = `⛽ GOOGLE MAPS ➔ GO`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.open(fallbackUrl, '_blank');
             }
         }
 
         async function findMedical() {
             const btn = document.getElementById('medBtn');
-            setBtnSearching(btn);
+            const t = STRINGS[currentLang];
+            btn.innerText = t.searchStr;
+            btn.onclick = null; 
 
-            const query = `[out:json][timeout:15];(node(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];way(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];rel(around:15000,${currentLat},${currentLon})["amenity"~"hospital|clinic"];);out center;`;
+            const r = 15000;
+            const queryBody = `
+                nwr(around:${r},${currentLat},${currentLon})["amenity"="hospital"];
+                nwr(around:${r},${currentLat},${currentLon})["amenity"="clinic"];
+                nwr(around:${r},${currentLat},${currentLon})["healthcare"="hospital"];
+            `;
 
             try {
-                const data = await overpassQuery(query);
-                const nearest = findNearestElement(data);
-                const mapsUrl = nearest
-                    ? `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`
-                    : '';
-                presentPoiResult(btn, nearest, STRINGS[currentLang].medicalCenter, 'med', mapsUrl);
+                const nearest = await queryOverpassNearest(queryBody);
+                if (!nearest) {
+                    btn.innerText = t.noneStr;
+                    setTimeout(resetActionButtons, 3000);
+                    return;
+                }
+
+                const stName = nearest.tags?.name || t.medicalCenter;
+                const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${nearest.lat},${nearest.lon}`;
+
+                btn.innerHTML = `🏥 ${stName} (${nearest.dist.toFixed(1)} km) ➔ GO`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.open(mapsUrl, '_blank');
             } catch (e) {
-                console.error(e);
-                setBtnError(btn);
+                const fallbackUrl = `https://www.google.com/maps/search/hospital+clinic/@${currentLat},${currentLon},13z`;
+                btn.innerHTML = `🏥 GOOGLE MAPS ➔ GO`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.open(fallbackUrl, '_blank');
             }
         }
 
         async function findSOS() {
             const btn = document.getElementById('sosBtn');
-            setBtnSearching(btn);
+            const t = STRINGS[currentLang];
+            
+            const coordsBox = document.getElementById('coordsBox');
+            document.getElementById('coordsText').innerText = `GPS: ${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
+            coordsBox.style.display = 'flex';
 
-            const query = `[out:json][timeout:10];way(around:300,${currentLat},${currentLon})["highway"="motorway"];out center;`;
-
+            btn.innerText = t.searchStr;
+            btn.onclick = null; 
+            
+            const query = `[out:json][timeout:3];way(around:150,${currentLat},${currentLon})["highway"="motorway"];out tags;`;
+            
             try {
-                const data = await overpassQuery(query);
-                resolveAndDialSOS(btn, data.elements || []);
-            } catch (e) {
-                console.error(e);
-                dialSOS(btn, "112", "112 (SOS)");
-            }
-        }
-
-        function dialSOS(btn, phone, opName) {
-            btn.classList.remove('searching');
-            btn.classList.add('result');
-            setBtnWithIcon(btn, ICONS.sos, `${opName} ➔ ${phone}`);
-            btn.onclick = () => { window.location.href = `tel:${phone}`; };
-        }
-
-        function resolveAndDialSOS(btn, elements) {
-            let matchedOp = null;
-
-            if (elements.length > 0) {
-                let closestWay = null;
-                let minDist = Infinity;
-                elements.forEach(el => {
-                    const lat = el.lat ?? el.center?.lat;
-                    const lon = el.lon ?? el.center?.lon;
-                    if (lat == null || lon == null) return;
-                    const d = haversineDist(currentLat, currentLon, lat, lon);
-                    if (d < minDist) { minDist = d; closestWay = el; }
-                });
-
-                if (closestWay) {
-                    const name = (closestWay.tags?.name || "").toLowerCase();
-                    const ref = (closestWay.tags?.ref || "").toUpperCase();
-
-                    for (const op of MOTORWAY_OPERATORS) {
-                        const nameHit = op.matchName && name.includes(op.matchName);
-                        const refHit = op.matchRef && ref.includes(op.matchRef);
-                        if (nameHit || refHit) {
-                            if (op.latSegments) {
-                                matchedOp = op.latSegments.find(seg => currentLat < seg.maxLat) || null;
-                            } else {
-                                matchedOp = op;
-                            }
+                let data = null;
+                for (const server of OVERPASS_SERVERS) {
+                    try {
+                        const url = `${server}?data=${encodeURIComponent(query)}`;
+                        const res = await fetchWithTimeout(url, 3000);
+                        if (res.ok) {
+                            data = await res.json();
                             break;
                         }
+                    } catch (err) {}
+                }
+
+                let phone = "112";
+                let opName = "112 (SOS)";
+                
+                if (data && data.elements && data.elements.length > 0) {
+                    const way = data.elements[0];
+                    const name = (way.tags?.name || "").toLowerCase();
+                    const ref = (way.tags?.ref || "").toUpperCase();
+                    
+                    if (name.includes("αττική") || ref.includes("A6")) { phone = "1077"; opName = "Αττική Οδός"; }
+                    else if (name.includes("εγνατία") || ref.includes("A2")) { phone = "1077"; opName = "Εγνατία Οδός"; }
+                    else if (name.includes("ολυμπία") || ref.includes("A8")) { phone = "1024"; opName = "Ολυμπία Οδός"; }
+                    else if (name.includes("μορέας") || ref.includes("A7")) { phone = "1025"; opName = "Μορέας (Α7)"; }
+                    else if (name.includes("ιόνια") || ref.includes("A5")) { phone = "1075"; opName = "Ιόνια Οδός"; }
+                    else if (ref.includes("A3")) { phone = "1075"; opName = "Κεντρική Οδός (E65)"; }
+                    else if (ref.includes("A1")) {
+                        if (currentLat < 38.8) { phone = "1075"; opName = "Νέα Οδός (Α1)"; }
+                        else if (currentLat < 40.5) { phone = "1144"; opName = "Αυτ. Αιγαίου"; }
+                        else { phone = "1077"; opName = "Εγνατία / Α1"; }
                     }
                 }
+                
+                btn.innerHTML = `📞 ${opName} (${phone})`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.location.href = `tel:${phone}`;
+            } catch (e) {
+                btn.innerHTML = `📞 ΚΛΗΣΗ 112`;
+                btn.style.background = "#fff";
+                btn.style.color = "#000";
+                btn.onclick = () => window.location.href = `tel:112`;
             }
+        }
 
-            if (matchedOp) {
-                dialSOS(btn, matchedOp.phone, matchedOp.opName[currentLang] || matchedOp.opName.el);
-            } else {
-                dialSOS(btn, "112", "112 (SOS)");
-            }
+        function copyCoords() {
+            const t = STRINGS[currentLang];
+            const str = `${currentLat.toFixed(5)}, ${currentLon.toFixed(5)}`;
+            navigator.clipboard.writeText(str);
+            const btn = document.getElementById('copyCoordsBtn');
+            btn.innerText = t.copiedBtn;
+            setTimeout(() => { btn.innerText = t.copyBtn; }, 2000);
+        }
+
+        async function reverseGeocode(lat, lon) {
+            try {
+                const res = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=12&accept-language=${currentLang}`, 3000);
+                const data = await res.json();
+                const addr = data.address;
+                if (addr) {
+                    return addr.city || addr.town || addr.municipality || addr.village || addr.suburb || "GPS";
+                }
+            } catch (e) {}
+            return "GPS";
+        }
+
+        function enableGpsMode() {
+            isManualSearch = false;
+            localStorage.setItem('motoManual', 'false');
+            getLocation(false);
         }
 
         function getLocation(silent = false) {
             if (!navigator.geolocation) return;
+            if (!silent) document.getElementById('currentLocDisplay').innerText = "📍 ...";
 
-            if (!silent) document.getElementById('currentLocDisplay').innerText = "Locating...";
-            navigator.geolocation.getCurrentPosition(p => {
-                const movedKm = haversineDist(currentLat, currentLon, p.coords.latitude, p.coords.longitude);
+            navigator.geolocation.getCurrentPosition(async (p) => {
+                const newLat = p.coords.latitude;
+                const newLon = p.coords.longitude;
+                const movedDist = haversineDist(currentLat, currentLon, newLat, newLon);
 
-                currentLat = p.coords.latitude;
-                currentLon = p.coords.longitude;
+                currentLat = newLat;
+                currentLon = newLon;
                 localStorage.setItem('motoLat', currentLat);
                 localStorage.setItem('motoLon', currentLon);
-                localStorage.setItem('motoName', "GPS Location");
-                document.getElementById('currentLocDisplay').innerText = "📍 GPS Location";
 
-                if (movedKm > GPS_REFETCH_THRESHOLD_KM) {
-                    selectedDayIndex = 0;
+                if (!silent || movedDist > 0.5 || currentCityName === "Athens, GR") {
+                    const placeName = await reverseGeocode(currentLat, currentLon);
+                    currentCityName = placeName;
+                    localStorage.setItem('motoName', placeName);
+                    document.getElementById('currentLocDisplay').innerText = `📍 ${placeName}`;
                     fetchWeather();
                 }
             }, () => {
-                if (!silent) showToast(STRINGS[currentLang].gpsDenied);
-            }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 15000 });
+                if (!silent) alert("GPS Denied");
+            }, { enableHighAccuracy: false, timeout: 7000, maximumAge: 60000 });
         }
 
         async function searchLocation() {
             const query = document.getElementById('locInput').value.trim();
             if (!query) return;
-            const encoded = encodeURIComponent(query);
-            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encoded}&count=1&language=${currentLang}&format=json`;
+            const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=${currentLang}&format=json`;
             try {
                 const res = await fetch(url);
                 const data = await res.json();
@@ -1727,43 +1342,18 @@
                     const place = data.results[0];
                     currentLat = place.latitude;
                     currentLon = place.longitude;
+                    isManualSearch = true;
                     const name = `${place.name}, ${place.country_code}`;
+                    currentCityName = name;
                     document.getElementById('currentLocDisplay').innerText = `📍 ${name}`;
                     localStorage.setItem('motoLat', currentLat);
                     localStorage.setItem('motoLon', currentLon);
                     localStorage.setItem('motoName', name);
-                    selectedDayIndex = 0;
+                    localStorage.setItem('motoManual', 'true');
                     fetchWeather();
-                } else {
-                    showToast(STRINGS[currentLang].notFound);
                 }
-            } catch (e) {
-                console.error(e);
-                showToast(STRINGS[currentLang].errStr);
-            }
+            } catch (e) { console.error(e); }
         }
-
-        function showToast(message) {
-            const cont = document.getElementById('alertsContainer');
-            const badge = document.createElement('div');
-            badge.className = 'badge warn';
-            badge.textContent = message;
-            badge.onclick = () => badge.remove();
-            cont.prepend(badge);
-            setTimeout(() => badge.remove(), 5000);
-        }
-
-        // Close any open hour popover when tapping elsewhere
-        document.addEventListener('click', (e) => {
-            if (openPopover && !openPopover.contains(e.target) && !e.target.closest('.hour-block')) {
-                closePopover();
-            }
-        }, true);
-
-        // Enter key submits the location search.
-        document.getElementById('locInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') searchLocation();
-        });
     </script>
 </body>
 </html>
